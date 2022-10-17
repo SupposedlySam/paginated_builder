@@ -13,7 +13,7 @@ class PaginatedBuilder<DataType, CursorType>
   /// [itemBuilder] you receive your converted item at that index instead.
   ///
   /// This item is retrieved from the in-memory cache located in the
-  /// [_PaginatedBuilderState.cachedItems] property of the State class.
+  /// [PaginatedBuilderState.cachedItems] property of the State class.
   final ConvertedWidgetBuilder<DataType> itemBuilder;
   const PaginatedBuilder({
     required this.itemBuilder,
@@ -39,11 +39,11 @@ class PaginatedBuilder<DataType, CursorType>
         );
 
   @override
-  _PaginatedBuilderState<DataType, CursorType> createState() =>
-      _PaginatedBuilderState<DataType, CursorType>();
+  PaginatedBuilderState<DataType, CursorType> createState() =>
+      PaginatedBuilderState<DataType, CursorType>();
 }
 
-class _PaginatedBuilderState<DataType, CursorType> extends PaginatedBaseState<
+class PaginatedBuilderState<DataType, CursorType> extends PaginatedBaseState<
     DataType, CursorType, PaginatedBuilder<DataType, CursorType>> {
   @override
   Widget paginatedItemBuilder(
