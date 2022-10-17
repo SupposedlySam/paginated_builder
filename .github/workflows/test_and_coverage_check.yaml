@@ -1,0 +1,6 @@
+name: Test & Coverage Check
+on: pull_request
+
+jobs:
+  test_and_coverage:
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1

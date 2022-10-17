@@ -1,0 +1,5 @@
+# Requires globally activating derry to use
+# flutter pub global activate derry
+
+# required before running: `yarn global add cspell`
+spell_check: cspell "**" --config ".github/cspell/cspell.json"
