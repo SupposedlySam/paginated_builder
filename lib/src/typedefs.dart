@@ -25,5 +25,10 @@ typedef EnclosingWidgetBuilder = Widget Function(
   int initialItemCount,
   AnimatableIndexedWidgetBuilder paginatedItemBuilder,
 );
-
 typedef ItemReceivedCallback<T> = void Function(int, T);
+typedef CursorSelector<DataType, CursorType> = CursorType Function(DataType);
+typedef DefaultPaginatorBuilder<DataType, CursorType>
+    = Paginator<DataType, CursorType> Function(
+  CursorSelector<DataType, CursorType> cursorSelector,
+  DataChunker<DataType, CursorType> dataChunker,
+);
