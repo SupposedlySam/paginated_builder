@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 
@@ -24,21 +25,11 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// This value should be 0.0 exclusive to 1.0 inclusive.
   final double thresholdPercent;
 
-  /// The callback used to request the next chunk and convert the returned json
-  /// into an object of your choosing.
-  ///
-  /// ### Params
-  /// The [Chunk] should have the cursor to begin from and the limit of items to
-  /// retrieve after the cursor.
-  ///
-  /// The [Converter] simply takes in json and returns an item of your choosing.
-  final Paginator<DataType, CursorType> paginator;
-
   /// The stream listened to once the initial page load happens.
   ///
   /// When items are added to this stream, they will be added to the cache and
   /// [onItemReceived] will be called.
-  final Stream<DataType> changesOnDataSource;
+  final Stream<DataType> afterPageLoadChangeStream;
 
   /// The function used to generate the widget shown when items exist in the
   /// cache.
@@ -58,7 +49,7 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   final ItemReceivedCallback<DataType>? onItemReceived;
 
   /// Used to limit the amount of data returned with each chunk
-  final int? limit;
+  final int? chunkDataLimit;
 
   /// Whether to enable print statements or not
   ///
@@ -66,16 +57,26 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// but not in production
   final bool enablePrintStatements;
 
+  /// Pagination is based on the original data retrieved from the
+  /// [afterPageLoadChangeStream]. When changes occur (new items are added to the stream)
+  /// this value tells whether or not to re-render the entire list.
+  final bool refreshListWhenSourceChanges;
+
+  final CursorSelector<DataType, CursorType> cursorSelector;
+  final DataChunker<DataType, CursorType> dataChunker;
+
   const PaginatedBase({
     required this.listBuilder,
-    required this.paginator,
-    required this.changesOnDataSource,
-    required this.thresholdPercent,
-    this.limit,
+    required this.cursorSelector,
+    required this.dataChunker,
+    this.afterPageLoadChangeStream = const Stream.empty(),
+    this.thresholdPercent = PaginatedBase.defaultThresholdPercent,
+    this.chunkDataLimit,
     this.onItemReceived,
     this.loadingWidget,
     this.emptyWidget,
-    this.enablePrintStatements = false,
+    this.enablePrintStatements = kDebugMode,
+    this.refreshListWhenSourceChanges = true,
     Key? key,
   })  : assert(thresholdPercent > 0.0),
         assert(thresholdPercent <= 1.0),
@@ -90,6 +91,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   late Chunk<DataType, CursorType> nextAvailableChunk;
   bool loading = false;
   StreamSubscription<DataType>? dataSourceChangesSub;
+  int _chunksRequested = 0;
 
   List<DataType> get cachedItems => _cachedItems;
 
@@ -99,11 +101,27 @@ abstract class PaginatedBaseState<DataType, CursorType,
   int get limit => lastRequestedChunk.limit;
   int get requestThresholdIndex =>
       (cacheIndex * widget.thresholdPercent).floor();
+  int get chunksRequested => _chunksRequested;
+
+  Paginator<DataType, CursorType> defaultPaginatorBuilder(
+    CursorSelector<DataType, CursorType> cursorSelector,
+    DataChunker<DataType, CursorType> dataChunker,
+  ) {
+    return (Chunk<DataType, CursorType> chunk) async {
+      // If we're passing back in the last value, immediately return.
+      if (chunk.status == ChunkStatus.last) return chunk;
+
+      return Chunker<DataType, CursorType>(
+        cursorSelector: cursorSelector,
+        dataChunker: dataChunker,
+      ).getNext(chunk);
+    };
+  }
 
   @override
   void initState() {
     super.initState();
-    final chunkLimit = widget.limit ?? Chunk.defaultLimit;
+    final chunkLimit = widget.chunkDataLimit ?? Chunk.defaultLimit;
     _requestChunk(Chunk(limit: chunkLimit))
         .then(_updateView)
         .then(_listenForChanges);
@@ -112,7 +130,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   /// Listen to a stream of items and insert them into the list
   void _listenForChanges(_) {
     dataSourceChangesSub ??=
-        widget.changesOnDataSource.listen(_cacheStartAndNotify);
+        widget.afterPageLoadChangeStream.listen(_cacheStartAndNotify);
   }
 
   void _updateView<T>([T? _]) {
@@ -130,20 +148,12 @@ abstract class PaginatedBaseState<DataType, CursorType,
   Widget build(BuildContext context) {
     final isLoading = loading && cachedItems.isEmpty;
     if (isLoading) {
-      return widget.loadingWidget ?? _defaultLoadingWidget();
+      return widget.loadingWidget ?? const DefaultLoadingView();
     } else if (cachedItems.isEmpty) {
-      return widget.emptyWidget ?? _defaultEmptyWidget();
+      return widget.emptyWidget ?? const DefaultEmptyView();
     }
 
     return widget.listBuilder(cacheLength, paginatedItemBuilder);
-  }
-
-  Widget _defaultEmptyWidget() {
-    return const Center(child: Text('Nothing to see here'));
-  }
-
-  Widget _defaultLoadingWidget() {
-    return const Center(child: CircularProgressIndicator.adaptive());
   }
 
   Future<void> _getNextChunk() async {
@@ -157,6 +167,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     conditionalPrint('paginated_builder: $chunk');
     nextAvailableChunk = chunk;
     if (nextAvailableChunk != lastRequestedChunk) {
+      _chunksRequested++;
       chunk.data.forEach(_cacheEndAndNotify);
     }
   }
@@ -169,7 +180,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   void _cacheStartAndNotify(DataType data) {
     final shouldUpdateUI = _cachedItems.isEmpty;
     _cachedItems.insert(0, data);
-    if (shouldUpdateUI) _updateView();
+    if (shouldUpdateUI || widget.refreshListWhenSourceChanges) _updateView();
     widget.onItemReceived?.call(0, data);
   }
 
@@ -198,9 +209,15 @@ abstract class PaginatedBaseState<DataType, CursorType,
     conditionalPrint('paginated_builder: requesting chunk');
     try {
       loading = true;
+
       lastRequestedChunk = chunk;
 
-      final result = await widget.paginator(chunk).then(_handleReceivedChunk);
+      final paginator = defaultPaginatorBuilder(
+        widget.cursorSelector,
+        widget.dataChunker,
+      );
+
+      final result = await paginator(chunk).then(_handleReceivedChunk);
 
       loading = false;
       return result;
@@ -216,5 +233,27 @@ abstract class PaginatedBaseState<DataType, CursorType,
       // ignore: avoid_print
       print(message);
     }
+  }
+}
+
+class DefaultLoadingView extends StatelessWidget {
+  const DefaultLoadingView({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: CircularProgressIndicator.adaptive());
+  }
+}
+
+class DefaultEmptyView extends StatelessWidget {
+  const DefaultEmptyView({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Nothing to see here'));
   }
 }
