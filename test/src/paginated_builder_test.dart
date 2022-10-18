@@ -31,13 +31,13 @@ void main() {
     );
   }
 
-  Future<List<Post>> handleGetNext(int? cursor, int limit) async {
+  Future<List<Post>> handleGetNext(Post? cursor, int limit) async {
     final isFirstRun = cursor == null;
 
     final data = isFirstRun
         ? allPosts.take(limit)
         : allPosts
-            .skipWhile((post) => post.id != cursor)
+            .skipWhile((post) => post != cursor)
             .skip(1) // Start after the previous cursor
             .take(limit);
 
@@ -52,10 +52,9 @@ void main() {
 
     widget = MaterialApp(
       home: Scaffold(
-        body: PaginatedBuilder<Post, int>(
+        body: PaginatedBuilder<Post, Post>(
           key: key,
           chunkDataLimit: 1,
-          cursorSelector: (post) => post.id,
           dataChunker: handleGetNext,
           itemBuilder: itemBuilder,
           afterPageLoadChangeStream: afterPageLoadChange.stream,
@@ -106,11 +105,10 @@ void main() {
     setUp(() {
       widget = MaterialApp(
         home: Scaffold(
-          body: PaginatedBuilder<Post, int>(
+          body: PaginatedBuilder<Post, Post>(
             key: key,
             chunkDataLimit: 15,
             itemBuilder: itemBuilder,
-            cursorSelector: (post) => post.id,
             dataChunker: handleGetNext,
             listBuilder: listBuilder,
             enablePrintStatements: false,
@@ -133,7 +131,7 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 100));
 
       await tester.fling(
-        find.byType(PaginatedBuilder<Post, int>),
+        find.byType(PaginatedBuilder<Post, Post>),
         const Offset(0, -1000),
         1000,
       );
