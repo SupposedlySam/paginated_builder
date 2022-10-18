@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 
+import 'utils.dart';
+
 /// Manages caching and retrieval of [Chunk]s using the provided [paginator].
 ///
 /// Commonly used as a wrapper around [ListView.builder].
@@ -62,10 +64,32 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// this value tells whether or not to re-render the entire list.
   final bool refreshListWhenSourceChanges;
 
-  final CursorSelector<DataType, CursorType> cursorSelector;
+  /// Used to select the value to passed into the [dataChunker] the next time
+  /// it's called.
+  ///
+  /// The cursor will come from the last item in the data returned by the
+  /// [dataChunker]. The cursor should be used to skip any records previously
+  /// retrieved before getting the next `n` records. `n` being the number of
+  /// records specified by the limit provided to the [dataChunker] callback.
+  final CursorSelector<DataType, CursorType>? cursorSelector;
+
+  /// Called to retrieve the next `n` number of items from your data source.
+  ///
+  /// Use the provided [cursor] and [limit] to skip and get the next 'n' number
+  /// of items. The cursor will be the identifier selected using the
+  /// [cursorSelector] from the last time the [getNext] method was called.
+  ///
+  /// If the [cursor] is `null`, this is the first time the method is being run
+  /// for this data source. Alternatively, it is possible to also receive a null cursor if the
+  ///
+  /// The [limit] is the maximum amount of items the method expects to receive
+  /// when being invoked.
+  ///
+  /// Warning: To avoid duplicate items, ensure you're getting the
+  /// [limit] number of items AFTER the [cursor].
   final DataChunker<DataType, CursorType> dataChunker;
 
-  const PaginatedBase({
+  PaginatedBase({
     required this.listBuilder,
     required this.cursorSelector,
     required this.dataChunker,
@@ -80,6 +104,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
     Key? key,
   })  : assert(thresholdPercent > 0.0),
         assert(thresholdPercent <= 1.0),
+        assert(cursorSelector != null ||
+            (cursorSelector == null &&
+                typeOf<DataType>() == typeOf<CursorType>())),
         super(key: key);
 }
 
@@ -213,7 +240,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
       lastRequestedChunk = chunk;
 
       final paginator = defaultPaginatorBuilder(
-        widget.cursorSelector,
+        widget.cursorSelector ?? (value) => value as CursorType,
         widget.dataChunker,
       );
 

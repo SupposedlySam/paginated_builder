@@ -25,11 +25,11 @@ class PaginatedComparator<DataType, CursorType>
   /// [PaginatedComparatorState.cachedItems] property of the State class.
   final ComparableWidgetBuilder<DataType> itemBuilder;
 
-  const PaginatedComparator({
+  PaginatedComparator({
     required super.listBuilder,
     required this.itemBuilder,
-    required super.cursorSelector,
     required super.dataChunker,
+    super.cursorSelector,
     super.chunkDataLimit,
     super.afterPageLoadChangeStream,
     super.thresholdPercent,

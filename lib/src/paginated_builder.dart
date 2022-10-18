@@ -15,11 +15,11 @@ class PaginatedBuilder<DataType, CursorType>
   /// [PaginatedBuilderState.cachedItems] property of the State class.
   final ConvertedWidgetBuilder<DataType> itemBuilder;
 
-  const PaginatedBuilder({
+  PaginatedBuilder({
     required super.listBuilder,
     required this.itemBuilder,
-    required super.cursorSelector,
     required super.dataChunker,
+    super.cursorSelector,
     super.chunkDataLimit,
     super.afterPageLoadChangeStream,
     super.thresholdPercent,
