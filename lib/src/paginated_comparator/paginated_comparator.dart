@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 import 'package:paginated_builder/src/paginated_base.dart';
@@ -23,42 +22,32 @@ class PaginatedComparator<DataType, CursorType>
   /// previous == current == next
   ///
   /// Items are retrieved from the in-memory cache located in the
-  /// [_PaginatedComparatorState.cachedItems] property of the State class.
+  /// [PaginatedComparatorState.cachedItems] property of the State class.
   final ComparableWidgetBuilder<DataType> itemBuilder;
 
   const PaginatedComparator({
+    required super.listBuilder,
     required this.itemBuilder,
-    required Paginator<DataType, CursorType> paginator,
-    required Stream<DataType> changesOnDataSource,
-    required EnclosingWidgetBuilder listBuilder,
-    double thresholdPercent = PaginatedBase.defaultThresholdPercent,
-    Widget? loadingWidget,
-    Widget? emptyWidget,
-    int? chunkDataLimit,
-    ItemReceivedCallback<DataType>? onItemReceived,
-    Key? key,
-    bool enablePrintStatements = kDebugMode,
-  }) : super(
-          changesOnDataSource: changesOnDataSource,
-          emptyWidget: emptyWidget,
-          enablePrintStatements: enablePrintStatements,
-          limit: chunkDataLimit,
-          listBuilder: listBuilder,
-          paginator: paginator,
-          key: key,
-          loadingWidget: loadingWidget,
-          thresholdPercent: thresholdPercent,
-          onItemReceived: onItemReceived,
-        );
+    required super.cursorSelector,
+    required super.dataChunker,
+    super.chunkDataLimit,
+    super.afterPageLoadChangeStream,
+    super.thresholdPercent,
+    super.loadingWidget,
+    super.emptyWidget,
+    super.onItemReceived,
+    super.key,
+    super.enablePrintStatements,
+    super.refreshListWhenSourceChanges = false,
+  });
 
   @override
-  _PaginatedComparatorState<DataType, CursorType> createState() =>
-      _PaginatedComparatorState<DataType, CursorType>();
+  PaginatedComparatorState<DataType, CursorType> createState() =>
+      PaginatedComparatorState<DataType, CursorType>();
 }
 
-class _PaginatedComparatorState<DataType, CursorType>
-    extends PaginatedBaseState<DataType, CursorType,
-        PaginatedComparator<DataType, CursorType>> {
+class PaginatedComparatorState<DataType, CursorType> extends PaginatedBaseState<
+    DataType, CursorType, PaginatedComparator<DataType, CursorType>> {
   /// Contains the available index to be within bounds
   ///
   /// This prevents "OutOfRangeException"s being thrown when searching for the

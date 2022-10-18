@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 import 'package:paginated_builder/src/paginated_base.dart';
@@ -15,28 +14,22 @@ class PaginatedBuilder<DataType, CursorType>
   /// This item is retrieved from the in-memory cache located in the
   /// [PaginatedBuilderState.cachedItems] property of the State class.
   final ConvertedWidgetBuilder<DataType> itemBuilder;
+
   const PaginatedBuilder({
+    required super.listBuilder,
     required this.itemBuilder,
-    required Paginator<DataType, CursorType> paginator,
-    required Stream<DataType> changesOnDataSource,
-    required EnclosingWidgetBuilder listBuilder,
-    double thresholdPercent = PaginatedBase.defaultThresholdPercent,
-    Widget? loadingWidget,
-    Widget? emptyWidget,
-    ItemReceivedCallback<DataType>? onItemReceived,
-    Key? key,
-    bool enablePrintStatements = kDebugMode,
-  }) : super(
-          changesOnDataSource: changesOnDataSource,
-          emptyWidget: emptyWidget,
-          enablePrintStatements: enablePrintStatements,
-          listBuilder: listBuilder,
-          paginator: paginator,
-          key: key,
-          loadingWidget: loadingWidget,
-          thresholdPercent: thresholdPercent,
-          onItemReceived: onItemReceived,
-        );
+    required super.cursorSelector,
+    required super.dataChunker,
+    super.chunkDataLimit,
+    super.afterPageLoadChangeStream,
+    super.thresholdPercent,
+    super.loadingWidget,
+    super.emptyWidget,
+    super.onItemReceived,
+    super.key,
+    super.enablePrintStatements,
+    super.refreshListWhenSourceChanges,
+  });
 
   @override
   PaginatedBuilderState<DataType, CursorType> createState() =>
