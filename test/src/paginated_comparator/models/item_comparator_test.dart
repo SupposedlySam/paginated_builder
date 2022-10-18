@@ -19,5 +19,24 @@ void main() {
         isLastItem: true,
       ),
     );
+
+    expect(
+      // ignore: prefer_const_constructors
+      ItemComparator<int>(
+        previous: 1,
+        current: 2,
+        next: 3,
+        isFirstItem: true,
+        isLastItem: true,
+      ),
+      // ignore: prefer_const_constructors
+      ItemComparator<int>(
+        previous: 1,
+        current: 2,
+        next: 3,
+        isFirstItem: true,
+        isLastItem: true,
+      ),
+    );
   });
 }
