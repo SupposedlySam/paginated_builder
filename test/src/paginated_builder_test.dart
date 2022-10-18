@@ -16,7 +16,12 @@ void main() {
     sync: true,
   );
 
-  Widget itemBuilder(context, post, [animation]) => ListTile(
+  Widget itemBuilder(
+    BuildContext context,
+    Post post, [
+    Animation<double>? animation,
+  ]) =>
+      ListTile(
         dense: true,
         key: ValueKey(post),
         title: Text(post.title),
