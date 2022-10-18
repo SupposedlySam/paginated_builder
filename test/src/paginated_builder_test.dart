@@ -24,10 +24,10 @@ void main() {
         leading: Text(post.id.toString()),
       );
 
-  Widget listBuilder(initialItemCount, paginatedItemBuider) {
+  Widget listBuilder(initialItemCount, paginatedItemBuilder) {
     return ListView.builder(
       itemCount: initialItemCount,
-      itemBuilder: paginatedItemBuider,
+      itemBuilder: paginatedItemBuilder,
     );
   }
 
