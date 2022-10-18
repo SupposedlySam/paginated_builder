@@ -89,7 +89,7 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// [limit] number of items AFTER the [cursor].
   final DataChunker<DataType, CursorType> dataChunker;
 
-  PaginatedBase({
+  const PaginatedBase({
     required this.listBuilder,
     required this.cursorSelector,
     required this.dataChunker,
@@ -104,9 +104,6 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
     Key? key,
   })  : assert(thresholdPercent > 0.0),
         assert(thresholdPercent <= 1.0),
-        assert(cursorSelector != null ||
-            (cursorSelector == null &&
-                typeOf<DataType>() == typeOf<CursorType>())),
         super(key: key);
 }
 
@@ -217,7 +214,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     Animation<double>? animation,
   ]);
 
-  void getChunkIfInLastChunkAndPastThreshold(int index) {
+  Future<void> getChunkIfInLastChunkAndPastThreshold(int index) async {
     final inLastChunk = index > lastCachedChunkStartingIndex;
     final hasMetThreshold = index >= requestThresholdIndex;
 
@@ -228,7 +225,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
       conditionalPrint(
         'paginated_builder: in last chunk and has met threshold',
       );
-      _getNextChunk();
+      await _getNextChunk();
     }
   }
 
@@ -238,6 +235,15 @@ abstract class PaginatedBaseState<DataType, CursorType,
       loading = true;
 
       lastRequestedChunk = chunk;
+
+      if (widget.cursorSelector != null ||
+          (widget.cursorSelector == null &&
+              typeOf<DataType>() != typeOf<CursorType>())) {
+        throw Exception(
+          'You must provide a `cursorSelector` when your `DataType` and'
+          ' `CursorType` don\'t match',
+        );
+      }
 
       final paginator = defaultPaginatorBuilder(
         widget.cursorSelector ?? (value) => value as CursorType,
@@ -258,15 +264,14 @@ abstract class PaginatedBaseState<DataType, CursorType,
   void conditionalPrint(String message) {
     if (widget.enablePrintStatements) {
       // ignore: avoid_print
+      // coverage: ignore-line
       print(message);
     }
   }
 }
 
 class DefaultLoadingView extends StatelessWidget {
-  const DefaultLoadingView({
-    Key? key,
-  }) : super(key: key);
+  const DefaultLoadingView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -275,9 +280,7 @@ class DefaultLoadingView extends StatelessWidget {
 }
 
 class DefaultEmptyView extends StatelessWidget {
-  const DefaultEmptyView({
-    Key? key,
-  }) : super(key: key);
+  const DefaultEmptyView({super.key});
 
   @override
   Widget build(BuildContext context) {
