@@ -1,6 +1,6 @@
 import 'package:example/l10n/l10n.dart';
 import 'package:example/paginated_builder/cubit/basic_paginated_builder_cubit.dart';
-import 'package:example/paginated_builder/view/post_model.dart';
+import 'package:example/paginated_builder/models/post.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paginated_builder/paginated_builder.dart';
@@ -157,21 +157,23 @@ class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
                 // Required when using a List wiget that doesn't allow
                 // item insertion
                 rebuildListWhenChunkIsCached: true,
-                onListRebuild: () {
-                  final chunksRequested = getChunksRequested();
-                  final itemCacheLength = getItemCacheLength();
-                  setState(
-                    () {
-                      chunkCount = chunksRequested;
-                      this.itemCacheLength = itemCacheLength;
-                    },
-                  );
-                },
+                onListRebuild: displayLatestPaginationData,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void displayLatestPaginationData() {
+    final chunksRequested = getChunksRequested();
+    final itemCacheLength = getItemCacheLength();
+    setState(
+      () {
+        chunkCount = chunksRequested;
+        this.itemCacheLength = itemCacheLength;
+      },
     );
   }
 }

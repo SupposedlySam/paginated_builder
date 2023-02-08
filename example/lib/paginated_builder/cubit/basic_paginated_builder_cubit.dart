@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:example/paginated_builder/view/post_model.dart';
+import 'package:example/paginated_builder/models/models.dart';
 
 class BasicPaginatedBuilderCubit extends Cubit<List<Post>> {
   BasicPaginatedBuilderCubit(this.itemCount) : super([]);
