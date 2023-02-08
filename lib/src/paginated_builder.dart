@@ -7,22 +7,24 @@ import 'package:paginated_builder/src/paginated_base.dart';
 /// Commonly used as a wrapper around [ListView.builder].
 class PaginatedBuilder<DataType, CursorType>
     extends PaginatedBase<DataType, CursorType> {
-
   const PaginatedBuilder({
     required super.listBuilder,
     required this.itemBuilder,
     required super.dataChunker,
-    super.cursorSelector,
-    super.chunkDataLimit,
     super.afterPageLoadChangeStream,
-    super.thresholdPercent,
-    super.loadingWidget,
+    super.chunkDataLimit,
+    super.cursorSelector,
     super.emptyWidget,
-    super.onItemReceived,
-    super.key,
     super.enablePrintStatements,
-    super.refreshListWhenSourceChanges,
+    super.key,
+    super.loadingWidget,
+    super.onItemReceived,
+    super.onListRebuild,
+    super.rebuildListWhenChunkIsCached,
+    super.rebuildListWhenSourceChanges,
+    super.thresholdPercent,
   });
+
   /// The item builder is the same callback used with [ListView.builder] with
   /// one exception. Normally you receive an index, whereas with this
   /// [itemBuilder] you receive your converted item at that index instead.

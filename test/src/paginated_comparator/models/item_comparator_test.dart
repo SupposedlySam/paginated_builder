@@ -5,16 +5,16 @@ void main() {
   test('should compare by value', () {
     expect(
       const ItemComparator<int>(
-        previous: 1,
-        current: 2,
-        next: 3,
+        previousItem: ItemData(item: 1, index: 0),
+        currentItem: ItemData(item: 2, index: 0),
+        nextItem: ItemData(item: 3, index: 0),
         isFirstItem: true,
         isLastItem: true,
       ),
       const ItemComparator<int>(
-        previous: 1,
-        current: 2,
-        next: 3,
+        previousItem: ItemData(item: 1, index: 0),
+        currentItem: ItemData(item: 2, index: 0),
+        nextItem: ItemData(item: 3, index: 0),
         isFirstItem: true,
         isLastItem: true,
       ),
@@ -23,17 +23,17 @@ void main() {
     expect(
       // ignore: prefer_const_constructors
       ItemComparator<int>(
-        previous: 1,
-        current: 2,
-        next: 3,
+        previousItem: const ItemData(item: 1, index: 0),
+        currentItem: const ItemData(item: 2, index: 0),
+        nextItem: const ItemData(item: 3, index: 0),
         isFirstItem: true,
         isLastItem: true,
       ),
       // ignore: prefer_const_constructors
       ItemComparator<int>(
-        previous: 1,
-        current: 2,
-        next: 3,
+        previousItem: const ItemData(item: 1, index: 0),
+        currentItem: const ItemData(item: 2, index: 0),
+        nextItem: const ItemData(item: 3, index: 0),
         isFirstItem: true,
         isLastItem: true,
       ),

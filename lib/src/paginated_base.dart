@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 
 import 'package:paginated_builder/src/utils.dart';
@@ -22,7 +23,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
     this.loadingWidget,
     this.emptyWidget,
     this.enablePrintStatements = kDebugMode,
-    this.refreshListWhenSourceChanges = true,
+    this.rebuildListWhenSourceChanges = false,
+    this.rebuildListWhenChunkIsCached = false,
+    this.onListRebuild,
     super.key,
   })  : assert(
           thresholdPercent > 0.0,
@@ -75,6 +78,11 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// The callback will be called for every item received in each chunk
   final ItemReceivedCallback<DataType>? onItemReceived;
 
+  /// Invoked when the list rebuilds
+  ///
+  /// The callback will be called for every rebuild of the list
+  final void Function()? onListRebuild;
+
   /// Used to limit the amount of data returned with each chunk
   final int? chunkDataLimit;
 
@@ -88,7 +96,23 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// [afterPageLoadChangeStream]. When changes occur (new items are added to
   /// the stream)
   /// this value tells whether or not to re-render the entire list.
-  final bool refreshListWhenSourceChanges;
+  final bool rebuildListWhenSourceChanges;
+
+  /// By default, the list created by the [listBuilder] is only ever built once
+  /// on initialization. Every time the list is re-built, all items need to be
+  /// recreated using the item builder. Therefore, it is recommended to use a
+  /// list that allows you to add in the items as they come in through the
+  /// [onItemReceived] callback.
+  ///
+  /// However, when using a standard [ListView], there is no mechanism to insert
+  /// items into the list without rebuilding the entire list. Because of this,
+  /// you can set this value to `true` and the list will re-initialize with all
+  /// of the cached items retrieved so far.
+  ///
+  /// It's recommended to use a [AnimatedList] to insert and removes items from
+  /// the state using a [GlobalKey] or the static `of` method (see
+  /// AnimatedList's doc comments for details).
+  final bool rebuildListWhenChunkIsCached;
 
   /// Used to select the value to passed into the [dataChunker] the next time
   /// it's called.
@@ -173,7 +197,14 @@ abstract class PaginatedBaseState<DataType, CursorType,
   }
 
   void _updateView<T>([T? _]) {
-    if (mounted) setState(() {});
+    if (mounted) {
+      if (widget.onListRebuild != null) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          widget.onListRebuild!();
+        });
+      }
+      setState(() {});
+    }
   }
 
   @override
@@ -210,7 +241,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     if (nextAvailableChunk != lastRequestedChunk) {
       _chunksRequested++;
       chunk.data.forEach(_cacheEndAndNotify);
-      if (widget.refreshListWhenSourceChanges) _updateView<DataType>();
+      if (widget.rebuildListWhenChunkIsCached) _updateView<DataType>();
     }
   }
 
@@ -222,7 +253,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   void _cacheStartAndNotify(DataType data) {
     final shouldUpdateUI = _cachedItems.isEmpty;
     _cachedItems.insert(0, data);
-    if (shouldUpdateUI || widget.refreshListWhenSourceChanges) {
+    if (shouldUpdateUI || widget.rebuildListWhenSourceChanges) {
       _updateView<DataType>();
     }
     widget.onItemReceived?.call(0, data);

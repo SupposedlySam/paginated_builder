@@ -11,16 +11,18 @@ class PaginatedComparator<DataType, CursorType>
     required super.listBuilder,
     required this.itemBuilder,
     required super.dataChunker,
-    super.cursorSelector,
-    super.chunkDataLimit,
     super.afterPageLoadChangeStream,
-    super.thresholdPercent,
-    super.loadingWidget,
+    super.chunkDataLimit,
+    super.cursorSelector,
     super.emptyWidget,
-    super.onItemReceived,
-    super.key,
     super.enablePrintStatements,
-    super.refreshListWhenSourceChanges = false,
+    super.key,
+    super.loadingWidget,
+    super.onItemReceived,
+    super.onListRebuild,
+    super.rebuildListWhenChunkIsCached,
+    super.rebuildListWhenSourceChanges,
+    super.thresholdPercent,
   });
 
   /// The item reducer is the same callback used with [ListView.builder] with
@@ -62,10 +64,22 @@ class PaginatedComparatorState<DataType, CursorType> extends PaginatedBaseState<
     int index, [
     Animation<double>? animation,
   ]) {
+    final previousItemIndex = withinRange(index - 1);
+    final currentItemIndex = withinRange(index);
+    final nextItemIndex = withinRange(index + 1);
     final comparator = ItemComparator(
-      previous: cachedItems[withinRange(index - 1)],
-      current: cachedItems[withinRange(index)],
-      next: cachedItems[withinRange(index + 1)],
+      previousItem: ItemData(
+        item: cachedItems[previousItemIndex],
+        index: previousItemIndex,
+      ),
+      currentItem: ItemData(
+        item: cachedItems[currentItemIndex],
+        index: currentItemIndex,
+      ),
+      nextItem: ItemData(
+        item: cachedItems[nextItemIndex],
+        index: nextItemIndex,
+      ),
       isFirstItem: index == 0,
       isLastItem: index == cacheIndex,
     );
