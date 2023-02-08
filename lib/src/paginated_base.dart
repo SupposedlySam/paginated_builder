@@ -5,12 +5,36 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 
-import 'utils.dart';
+import 'package:paginated_builder/src/utils.dart';
 
 /// Manages caching and retrieval of [Chunk]s using the provided [paginator].
 ///
 /// Commonly used as a wrapper around [ListView.builder].
 abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
+  const PaginatedBase({
+    required this.listBuilder,
+    required this.cursorSelector,
+    required this.dataChunker,
+    this.afterPageLoadChangeStream = const Stream.empty(),
+    this.thresholdPercent = PaginatedBase.defaultThresholdPercent,
+    this.chunkDataLimit,
+    this.onItemReceived,
+    this.loadingWidget,
+    this.emptyWidget,
+    this.enablePrintStatements = kDebugMode,
+    this.refreshListWhenSourceChanges = true,
+    super.key,
+  })  : assert(
+          thresholdPercent > 0.0,
+          'threshold should be greater than 0',
+        ),
+        assert(
+          thresholdPercent <= 1.0,
+          'threshold should be less than or equal to 1',
+        );
+
+  /// The default value used to define how far the user can scroll before the
+  /// next chunk of data is retrieved.
   static const double defaultThresholdPercent = 0.7;
 
   /// Optional replacement for  the loading widget displayed before the first
@@ -41,8 +65,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// paginatedItemBuilder parameter.
   ///
   /// ### Param
-  /// The [AnimatableIndexedWidgetBuilder] is the paginated item builder provided by this
-  /// widget. Use it as a direct replacement for any regular or animated itemBuilder.
+  /// The [AnimatableIndexedWidgetBuilder] is the paginated item builder
+  /// provided by this widget. Use it as a direct replacement for any
+  /// regular or animated itemBuilder.
   final EnclosingWidgetBuilder listBuilder;
 
   /// Invoked when data from a new chunk is received
@@ -60,7 +85,8 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   final bool enablePrintStatements;
 
   /// Pagination is based on the original data retrieved from the
-  /// [afterPageLoadChangeStream]. When changes occur (new items are added to the stream)
+  /// [afterPageLoadChangeStream]. When changes occur (new items are added to
+  /// the stream)
   /// this value tells whether or not to re-render the entire list.
   final bool refreshListWhenSourceChanges;
 
@@ -80,7 +106,8 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// [cursorSelector] from the last time the [getNext] method was called.
   ///
   /// If the [cursor] is `null`, this is the first time the method is being run
-  /// for this data source. Alternatively, it is possible to also receive a null cursor if the
+  /// for this data source. Alternatively, it is possible to also receive a null
+  /// cursor if the
   ///
   /// The [limit] is the maximum amount of items the method expects to receive
   /// when being invoked.
@@ -88,23 +115,6 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// Warning: To avoid duplicate items, ensure you're getting the
   /// [limit] number of items AFTER the [cursor].
   final DataChunker<DataType, CursorType> dataChunker;
-
-  const PaginatedBase({
-    required this.listBuilder,
-    required this.cursorSelector,
-    required this.dataChunker,
-    this.afterPageLoadChangeStream = const Stream.empty(),
-    this.thresholdPercent = PaginatedBase.defaultThresholdPercent,
-    this.chunkDataLimit,
-    this.onItemReceived,
-    this.loadingWidget,
-    this.emptyWidget,
-    this.enablePrintStatements = kDebugMode,
-    this.refreshListWhenSourceChanges = true,
-    Key? key,
-  })  : assert(thresholdPercent > 0.0),
-        assert(thresholdPercent <= 1.0),
-        super(key: key);
 }
 
 abstract class PaginatedBaseState<DataType, CursorType,
@@ -149,6 +159,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     final chunkLimit = widget.chunkDataLimit ?? Chunk.defaultLimit;
     _requestChunk(Chunk(limit: chunkLimit))
         .then(_updateView)
+        .then(_listenForChanges)
         .catchError((dynamic e) {
       // ignore: avoid_dynamic_calls
       setState(() => errorMessage = e.message as String);
@@ -210,7 +221,9 @@ abstract class PaginatedBaseState<DataType, CursorType,
   void _cacheStartAndNotify(DataType data) {
     final shouldUpdateUI = _cachedItems.isEmpty;
     _cachedItems.insert(0, data);
-    if (shouldUpdateUI || widget.refreshListWhenSourceChanges) _updateView();
+    if (shouldUpdateUI || widget.refreshListWhenSourceChanges) {
+      _updateView<DataType>();
+    }
     widget.onItemReceived?.call(0, data);
   }
 
@@ -247,7 +260,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
               typeOf<DataType>() != typeOf<CursorType>())) {
         throw Exception(
           'You must provide a `cursorSelector` when your `DataType` and'
-          ' `CursorType` don\'t match',
+          " `CursorType` don't match",
         );
       }
 
@@ -269,8 +282,8 @@ abstract class PaginatedBaseState<DataType, CursorType,
 
   void conditionalPrint(String message) {
     if (widget.enablePrintStatements) {
-      // ignore: avoid_print
       // coverage: ignore-line
+      // ignore: avoid_print
       print(message);
     }
   }

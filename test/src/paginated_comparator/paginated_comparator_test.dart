@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paginated_builder/paginated_builder.dart';
@@ -8,10 +6,11 @@ import 'package:paginated_builder/src/paginated_base.dart';
 import '../../models/post.dart';
 
 void main() {
-  final GlobalKey<PaginatedBaseState> key = GlobalKey<PaginatedBaseState>();
+  final key =
+      GlobalKey<PaginatedBaseState<Post, Post, PaginatedBuilder<Post, Post>>>();
   late Widget widget;
   late List<Post> allPosts;
-  Map<int, ItemComparator<Post>> comparators = <int, ItemComparator<Post>>{};
+  final comparators = <int, ItemComparator<Post>>{};
 
   Widget itemBuilder(
     BuildContext context,
@@ -29,14 +28,17 @@ void main() {
 
     return Row(
       children: [
-        toColumn(comparator.previous, "previous"),
-        toColumn(comparator.current, "current"),
-        toColumn(comparator.next, "next"),
+        toColumn(comparator.previous, 'previous'),
+        toColumn(comparator.current, 'current'),
+        toColumn(comparator.next, 'next'),
       ],
     );
   }
 
-  Widget listBuilder(initialItemCount, paginatedItemBuilder) {
+  Widget listBuilder(
+    int? initialItemCount,
+    NullableIndexedWidgetBuilder paginatedItemBuilder,
+  ) {
     return ListView.builder(
       itemCount: initialItemCount,
       itemBuilder: paginatedItemBuilder,
@@ -121,7 +123,7 @@ void main() {
     await tester.pumpWidget(widget);
     await tester.pumpAndSettle();
 
-    assert(comparators.keys.length > 1);
+    assert(comparators.keys.length > 1, "Comparators don't exist");
 
     final firstComparatorKey = comparators.keys.first;
     final firstComparator = comparators[firstComparatorKey]!;
@@ -135,6 +137,7 @@ void main() {
     expect(lastComparator.previous, isNot(lastComparator.current));
     expect(lastComparator.current, lastComparator.next);
   });
+
   testWidgets(
     'should show an error widget when an exception is throw inside '
     'the cursor selector',

@@ -8,11 +8,12 @@ import 'package:paginated_builder/src/paginated_base.dart';
 import '../models/post.dart';
 
 void main() {
-  final GlobalKey<PaginatedBaseState> key = GlobalKey<PaginatedBaseState>();
+  final key =
+      GlobalKey<PaginatedBaseState<Post, Post, PaginatedBuilder<Post, Post>>>();
   late Widget widget;
   late List<Post> allPosts;
   int getRequestedChunkCount() => key.currentState!.chunksRequested;
-  final StreamController<Post> afterPageLoadChange = StreamController.broadcast(
+  final afterPageLoadChange = StreamController<Post>.broadcast(
     sync: true,
   );
 
@@ -29,7 +30,10 @@ void main() {
         leading: Text(post.id.toString()),
       );
 
-  Widget listBuilder(initialItemCount, paginatedItemBuilder) {
+  Widget listBuilder(
+    int? initialItemCount,
+    NullableIndexedWidgetBuilder paginatedItemBuilder,
+  ) {
     return ListView.builder(
       itemCount: initialItemCount,
       itemBuilder: paginatedItemBuilder,
@@ -117,7 +121,7 @@ void main() {
             dataChunker: handleGetNext,
             listBuilder: listBuilder,
             enablePrintStatements: false,
-            thresholdPercent: 1.0,
+            thresholdPercent: 1,
           ),
         ),
       );

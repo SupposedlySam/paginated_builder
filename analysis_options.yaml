@@ -1,4 +1,20 @@
-include: package:flutter_lints/flutter.yaml
-
+include: package:very_good_analysis/analysis_options.yaml
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
+
+analyzer:
+  exclude:
+    - lib/*generated*
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+    - '**/*.mocks.dart'
+  errors:
+    invalid_implementation_override: warning
+    missing_required_param: error
+    missing_return: error
+    uri_has_not_been_generated: ignore
+# https://dart-lang.github.io/linter/lints/
+linter:
+  rules:
+    public_member_api_docs: false
+    comment_references: false
