@@ -282,9 +282,8 @@ abstract class PaginatedBaseState<DataType, CursorType,
 
   void conditionalPrint(String message) {
     if (widget.enablePrintStatements) {
-      // coverage: ignore-line
       // ignore: avoid_print
-      print(message);
+      print(message); // coverage:ignore-line
     }
   }
 }
