@@ -210,6 +210,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     if (nextAvailableChunk != lastRequestedChunk) {
       _chunksRequested++;
       chunk.data.forEach(_cacheEndAndNotify);
+      if (widget.refreshListWhenSourceChanges) _updateView<DataType>();
     }
   }
 
