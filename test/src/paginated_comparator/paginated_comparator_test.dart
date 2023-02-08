@@ -135,4 +135,28 @@ void main() {
     expect(lastComparator.previous, isNot(lastComparator.current));
     expect(lastComparator.current, lastComparator.next);
   });
+  testWidgets(
+    'should show an error widget when an exception is throw inside '
+    'the cursor selector',
+    (tester) async {
+      final widget = MaterialApp(
+        home: Scaffold(
+          body: PaginatedComparator<Post, int>(
+            key: key,
+            chunkDataLimit: 10,
+            cursorSelector: (p0) => throw Exception('expected'),
+            dataChunker: (post, id) async => allPosts,
+            itemBuilder: itemBuilder,
+            listBuilder: listBuilder,
+            enablePrintStatements: false,
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pump();
+
+      expect(find.byType(DefaultErrorView), findsOneWidget);
+    },
+  );
 }
