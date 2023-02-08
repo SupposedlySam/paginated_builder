@@ -126,6 +126,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   int get requestThresholdIndex =>
       (cacheIndex * widget.thresholdPercent).floor();
   int get chunksRequested => _chunksRequested;
+  String errorMessage = '';
 
   Paginator<DataType, CursorType> defaultPaginatorBuilder(
     CursorSelector<DataType, CursorType> cursorSelector,
@@ -148,7 +149,10 @@ abstract class PaginatedBaseState<DataType, CursorType,
     final chunkLimit = widget.chunkDataLimit ?? Chunk.defaultLimit;
     _requestChunk(Chunk(limit: chunkLimit))
         .then(_updateView)
-        .then(_listenForChanges);
+        .catchError((dynamic e) {
+      // ignore: avoid_dynamic_calls
+      setState(() => errorMessage = e.message as String);
+    });
   }
 
   /// Listen to a stream of items and insert them into the list
@@ -171,7 +175,9 @@ abstract class PaginatedBaseState<DataType, CursorType,
   @override
   Widget build(BuildContext context) {
     final isLoading = loading && cachedItems.isEmpty;
-    if (isLoading) {
+    if (errorMessage.isNotEmpty) {
+      return DefaultErrorView(errorMessage: errorMessage);
+    } else if (isLoading) {
       return widget.loadingWidget ?? const DefaultLoadingView();
     } else if (cachedItems.isEmpty) {
       return widget.emptyWidget ?? const DefaultEmptyView();
@@ -267,6 +273,35 @@ abstract class PaginatedBaseState<DataType, CursorType,
       // coverage: ignore-line
       print(message);
     }
+  }
+}
+
+class DefaultErrorView extends StatelessWidget {
+  const DefaultErrorView({
+    required this.errorMessage,
+    super.key,
+  });
+
+  final String errorMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Card(
+        color: Theme.of(context).colorScheme.error,
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            errorMessage,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onError,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
