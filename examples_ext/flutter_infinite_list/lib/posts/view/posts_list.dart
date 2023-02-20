@@ -11,9 +11,7 @@ class PostsList extends StatelessWidget {
     final bloc = context.read<PostBloc>();
 
     return PaginatedBuilder<Post, int>(
-      chunkDataLimit: 10,
       emptyWidget: const Center(child: Text('no posts')),
-      thresholdPercent: 0.9,
       rebuildListWhenChunkIsCached: true,
       cursorSelector: (Post post) => post.id,
       listBuilder: (initialItemCount, paginatedItemBuilder) {
@@ -25,9 +23,7 @@ class PostsList extends StatelessWidget {
       itemBuilder: (context, data, [animation]) {
         return PostListItem(post: data.item);
       },
-      dataChunker: (int? cursor, int limit) {
-        return bloc.fetchPosts(cursor ?? 0, limit);
-      },
+      dataChunker: bloc.fetchPosts,
     );
   }
 }

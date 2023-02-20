@@ -17,6 +17,7 @@ class PostBloc extends Cubit<PostState> {
 
   Future<List<Post>> fetchPosts(int? cursor, int limit) async {
     final startIndex = cursor ?? 0;
+
     final response = await Future.delayed(
       const Duration(seconds: 1),
       () => httpClient.get(
@@ -32,11 +33,7 @@ class PostBloc extends Cubit<PostState> {
       final body = json.decode(response.body) as List;
       return body.map((dynamic json) {
         final map = json as Map<String, dynamic>;
-        return Post(
-          id: map['id'] as int,
-          title: map['title'] as String,
-          body: map['body'] as String,
-        );
+        return Post.fromJson(map);
       }).toList();
     }
     throw Exception('error fetching posts');
