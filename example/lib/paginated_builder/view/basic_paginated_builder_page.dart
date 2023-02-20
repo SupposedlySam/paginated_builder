@@ -1,6 +1,8 @@
 import 'package:example/l10n/l10n.dart';
 import 'package:example/paginated_builder/cubit/basic_paginated_builder_cubit.dart';
+import 'package:example/paginated_builder/models/metrics_copy.dart';
 import 'package:example/paginated_builder/models/post.dart';
+import 'package:example/paginated_builder/view/widgets/builder_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paginated_builder/paginated_builder.dart';
@@ -41,16 +43,53 @@ class BasicPaginatedBuilderView extends StatefulWidget {
 
 class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
   int chunkCount = 0;
-  int itemCacheLength = 0;
+  int cacheCount = 0;
 
   final GlobalKey<PaginatedComparatorState<Post, Post>> paginatorKey =
       GlobalKey<PaginatedComparatorState<Post, Post>>();
 
-  int getChunksRequested() => paginatorKey.currentState?.chunksRequested ?? 0;
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
 
-  int getItemCacheLength() => paginatorKey.currentState?.cacheLength ?? 0;
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.basicPaginatedBuilderAppBarTitle)),
+      body: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            BuilderMetrics(
+              chunkCount: chunkCount,
+              itemCacheLength: cacheCount,
+              copy: MetricsCopy.localized(l10n),
+            ),
+            const Divider(),
+            Expanded(
+              child: PaginatedComparator<Post, Post>(
+                key: paginatorKey,
+                chunkDataLimit: BasicPaginatedBuilderPage.chunkSize,
+                dataChunker: _handleGetNext,
+                itemBuilder: _itemBuilder,
+                listBuilder: _listBuilder,
+                // Required when using a List wiget that doesn't allow
+                // item insertion
+                rebuildListWhenChunkIsCached: true,
+                onListRebuild: _updateBuilderMetrics,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  Widget itemBuilder(
+  /// Creates each item shown in the list
+  ///
+  /// Called for each item in the list. This will most likely be called multiple
+  /// times for each item because the list we're using in the [_listBuilder]
+  /// will remove items as they're scrolled off the screen and recreate them as
+  /// they are scrolled back into view.
+  Widget _itemBuilder(
     BuildContext context,
     ItemComparator<Post> comparator, [
     Animation<double>? animation,
@@ -72,6 +111,8 @@ class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
       );
     }
 
+    final l10n = context.l10n;
+
     return Card(
       margin: const EdgeInsets.all(12),
       child: Padding(
@@ -86,9 +127,9 @@ class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                toColumn(comparator.previous, 'previous'),
-                toColumn(comparator.current, 'current'),
-                toColumn(comparator.next, 'next'),
+                toColumn(comparator.previous, l10n.previousLabel),
+                toColumn(comparator.current, l10n.currentLabel),
+                toColumn(comparator.next, l10n.nextLabel),
               ],
             ),
           ],
@@ -97,7 +138,8 @@ class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
     );
   }
 
-  Widget listBuilder(
+  /// Controls what Widget is used to display the items being paginated through
+  Widget _listBuilder(
     int? initialItemCount,
     NullableIndexedWidgetBuilder paginatedItemBuilder,
   ) {
@@ -107,72 +149,37 @@ class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
     );
   }
 
-  Future<List<Post>> handleGetNext(Post? cursor, int limit) async {
+  /// Manual paginator when you already have the full list of items
+  ///
+  /// Accepts a cursor (the last item in the previous chunk) and a
+  /// limit (how many items should be returned at a time)
+  Future<List<Post>> _handleGetNext(Post? cursor, int limit) async {
+    // If the cursor is null it means there was no previous chunk
     final isFirstRun = cursor == null;
 
     final data = isFirstRun
+        // starting at the beginning of the list, get the maximum # of items
         ? widget.allPosts.take(limit)
+        // otherwise, skip the ones we've already returned and get # of items
         : widget.allPosts
             .skipWhile((post) => post != cursor)
             .skip(1) // Start after the previous cursor
             .take(limit);
 
-    return data.toList();
+    // Adds artificial network delay to show item loading widget
+    return Future.delayed(const Duration(seconds: 1), data.toList);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
+  /// Triggers an update to the view with the latest values from the paginated
+  /// builder
+  void _updateBuilderMetrics() {
+    final chunksRequested = paginatorKey.currentState?.chunksRequested ?? 0;
+    final itemCacheLength = paginatorKey.currentState?.cacheLength ?? 0;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.basicPaginatedBuilderAppBarTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text('Chunk Size: ${BasicPaginatedBuilderPage.chunkSize}'),
-                Text(
-                  'Total Comparators: ${BasicPaginatedBuilderPage.itemCount}',
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Chunks Requested: $chunkCount'),
-                Text('Cached Item Length: $itemCacheLength'),
-              ],
-            ),
-            const Divider(),
-            Expanded(
-              child: PaginatedComparator<Post, Post>(
-                key: paginatorKey,
-                chunkDataLimit: BasicPaginatedBuilderPage.chunkSize,
-                dataChunker: handleGetNext,
-                itemBuilder: itemBuilder,
-                listBuilder: listBuilder,
-                // Required when using a List wiget that doesn't allow
-                // item insertion
-                rebuildListWhenChunkIsCached: true,
-                onListRebuild: displayLatestPaginationData,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void displayLatestPaginationData() {
-    final chunksRequested = getChunksRequested();
-    final itemCacheLength = getItemCacheLength();
     setState(
       () {
         chunkCount = chunksRequested;
-        this.itemCacheLength = itemCacheLength;
+        cacheCount = itemCacheLength;
       },
     );
   }
