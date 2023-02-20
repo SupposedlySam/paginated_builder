@@ -1,4 +1,12 @@
 {
   "@@locale": "en",
-  "basicPaginatedBuilderAppBarTitle": "Basic Paginated Comparator"
+  "basicPaginatedBuilderAppBarTitle": "Basic Paginated Comparator",
+  "comparatorLabelPrefix": "Comparator",
+  "currentLabel": "current",
+  "nextLabel": "next",
+  "previousLabel": "previous",
+  "builderMetricsChunkSizeLabel": "Chunk Size:",
+  "builderMetricsTotalComparatorsLabel": "Total Comparators:",
+  "builderMetricsChunksRequestedLabel": "Chunks Requested:",
+  "builderMetricsCachedItemLengthLabel": "Cached Item Length:"
 }
