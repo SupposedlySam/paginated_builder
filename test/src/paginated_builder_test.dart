@@ -19,15 +19,15 @@ void main() {
 
   Widget itemBuilder(
     BuildContext context,
-    Post post, [
+    ItemData<Post> data, [
     Animation<double>? animation,
   ]) =>
       ListTile(
         dense: true,
-        key: ValueKey(post),
-        title: Text(post.title),
-        subtitle: Text(post.body),
-        leading: Text(post.id.toString()),
+        key: ValueKey(data),
+        title: Text(data.item.title),
+        subtitle: Text(data.item.body),
+        leading: Text(data.item.id.toString()),
       );
 
   Widget listBuilder(
@@ -89,7 +89,7 @@ void main() {
     await tester.pumpWidget(widget);
 
     expect(
-      find.byType(DefaultLoadingView),
+      find.byType(DefaultPageLoadingView),
       findsOneWidget,
     );
   });

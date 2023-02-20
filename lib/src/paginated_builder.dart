@@ -48,6 +48,13 @@ class PaginatedBuilderState<DataType, CursorType> extends PaginatedBaseState<
   ]) {
     super.getChunkIfInLastChunkAndPastThreshold(index);
 
-    return widget.itemBuilder(context, cachedItems[index], animation);
+    return widget.itemBuilder(
+      context,
+      ItemData(
+        item: cachedItems[index],
+        index: index,
+      ),
+      animation,
+    );
   }
 }

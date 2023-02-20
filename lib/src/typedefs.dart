@@ -4,7 +4,7 @@ import 'package:paginated_builder/paginated_builder.dart';
 typedef MaybeJson = Map<String, dynamic>?;
 typedef ConvertedWidgetBuilder<T> = Widget Function(
   BuildContext context,
-  T item, [
+  ItemData<T> data, [
   Animation<double>? animation,
 ]);
 typedef ComparableWidgetBuilder<T> = Widget Function(
