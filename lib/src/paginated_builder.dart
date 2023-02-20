@@ -24,6 +24,7 @@ class PaginatedBuilder<DataType, CursorType>
     super.onListRebuild,
     super.rebuildListWhenChunkIsCached,
     super.rebuildListWhenSourceChanges,
+    super.shouldShowItemLoader,
     super.thresholdPercent,
   });
 
@@ -48,8 +49,6 @@ class PaginatedBuilderState<DataType, CursorType> extends PaginatedBaseState<
     int index, [
     Animation<double>? animation,
   ]) {
-    super.getChunkIfInLastChunkAndPastThreshold(index);
-
     return widget.itemBuilder(
       context,
       ItemData(

@@ -24,6 +24,7 @@ class PaginatedComparator<DataType, CursorType>
     super.onListRebuild,
     super.rebuildListWhenChunkIsCached,
     super.rebuildListWhenSourceChanges,
+    super.shouldShowItemLoader,
     super.thresholdPercent,
   });
 
@@ -85,8 +86,6 @@ class PaginatedComparatorState<DataType, CursorType> extends PaginatedBaseState<
       isFirstItem: index == 0,
       isLastItem: index == cacheIndex,
     );
-
-    super.getChunkIfInLastChunkAndPastThreshold(index);
 
     return widget.itemBuilder(context, comparator, animation);
   }

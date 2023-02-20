@@ -28,6 +28,7 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
     this.enablePrintStatements = kDebugMode,
     this.rebuildListWhenSourceChanges = false,
     this.rebuildListWhenChunkIsCached = false,
+    this.shouldShowItemLoader = true,
     this.onListRebuild,
     super.key,
   })  : assert(
@@ -125,6 +126,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// this value tells whether or not to re-render the entire list.
   final bool rebuildListWhenSourceChanges;
 
+  /// Whether to recreate the Widget provided in the [listBuilder] when items
+  /// from a new chunk is added to the in-memory cache
+  ///
   /// By default, the list created by the [listBuilder] is only ever built once
   /// on initialization. Every time the list is re-built, all items need to be
   /// recreated using the item builder. Therefore, it is recommended to use a
@@ -140,6 +144,14 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// the state using a [GlobalKey] or the static `of` method (see
   /// AnimatedList's doc comments for details).
   final bool rebuildListWhenChunkIsCached;
+
+  /// Whether to replace the last item in the list with a loading Widget when a
+  /// new chunk is being retrieved.
+  ///
+  /// Defauls to `true`
+  ///
+  /// See: [itemLoadingWidget] to use a custom Widget as the loader
+  final bool shouldShowItemLoader;
 
   /// Used to select the value to passed into the [dataChunker] the next time
   /// it's called.
@@ -197,6 +209,12 @@ abstract class PaginatedBaseState<DataType, CursorType,
       // If we're passing back in the last value, immediately return.
       if (chunk.status == ChunkStatus.last) return chunk;
 
+      _chunksRequested++;
+
+      conditionalPrint(
+        'paginated_builder: making request for chunk at cursor ${chunk.cursor}',
+      );
+
       return Chunker<DataType, CursorType>(
         cursorSelector: cursorSelector,
         dataChunker: dataChunker,
@@ -248,7 +266,13 @@ abstract class PaginatedBaseState<DataType, CursorType,
       return widget.emptyWidget!;
     }
 
-    return widget.listBuilder(cacheLength, paginatedItemBuilderWithEndLoader);
+    return widget.listBuilder(
+      cacheLength,
+      (context, index, [animation]) {
+        getChunkIfInLastChunkAndPastThreshold(index);
+        return paginatedItemBuilderWithEndLoader(context, index, animation);
+      },
+    );
   }
 
   Future<void> _getNextChunk() async {
@@ -258,11 +282,9 @@ abstract class PaginatedBaseState<DataType, CursorType,
   }
 
   void _handleReceivedChunk(Chunk<DataType, CursorType> chunk) {
-    conditionalPrint('paginated_builder: adding chunk to next available');
-    conditionalPrint('paginated_builder: $chunk');
+    conditionalPrint('paginated_builder: Next available is $chunk');
     nextAvailableChunk = chunk;
     if (nextAvailableChunk != lastRequestedChunk) {
-      _chunksRequested++;
       chunk.data.forEach(_cacheEndAndNotify);
       if (widget.rebuildListWhenChunkIsCached) _updateView<DataType>();
     }
@@ -298,7 +320,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     final nextChunkIsLoading = nextAvailableChunk.status != ChunkStatus.last;
 
     /// Builds the item from user code or shows an error widget
-    Widget buildItemOrError() {
+    Widget buildGuardedItem() {
       try {
         return paginatedItemBuilder(
           context,
@@ -310,19 +332,20 @@ abstract class PaginatedBaseState<DataType, CursorType,
       }
     }
 
-    return isAtEnd && nextChunkIsLoading
+    return isAtEnd && nextChunkIsLoading && widget.shouldShowItemLoader
         ? widget.itemLoadingWidget!
-        : buildItemOrError();
+        : buildGuardedItem();
   }
 
   Future<void> getChunkIfInLastChunkAndPastThreshold(int index) async {
+    final hasLimitOf1 = limit == 1;
     final inLastChunk = index > lastCachedChunkStartingIndex;
     final hasMetThreshold = index >= requestThresholdIndex;
 
     conditionalPrint(
       'paginated_builder: index: $index, threshold: $requestThresholdIndex',
     );
-    if (inLastChunk && hasMetThreshold) {
+    if ((hasLimitOf1 || inLastChunk) && hasMetThreshold) {
       conditionalPrint(
         'paginated_builder: in last chunk and has met threshold',
       );
@@ -331,7 +354,6 @@ abstract class PaginatedBaseState<DataType, CursorType,
   }
 
   Future<void> _requestChunk(Chunk<DataType, CursorType> chunk) async {
-    conditionalPrint('paginated_builder: requesting chunk');
     try {
       loading = true;
       pageErrorWidget = null;
