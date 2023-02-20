@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:paginated_builder/paginated_builder.dart';
-import 'package:paginated_builder/src/paginated_base.dart';
 
 /// Manages caching and retrieval of [Chunk]s using the provided [paginator].
 ///
@@ -17,8 +16,10 @@ class PaginatedBuilder<DataType, CursorType>
     super.emptyWidget,
     super.enablePrintStatements,
     super.key,
-    super.pageLoadingWidget,
     super.itemLoadingWidget,
+    super.pageLoadingWidget,
+    super.itemErrorWidgetBuilder,
+    super.pageErrorWidgetBuilder,
     super.onItemReceived,
     super.onListRebuild,
     super.rebuildListWhenChunkIsCached,

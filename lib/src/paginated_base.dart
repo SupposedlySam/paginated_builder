@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ErrorWidgetBuilder;
 import 'package:flutter/scheduler.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 
@@ -21,7 +21,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
     this.chunkDataLimit,
     this.onItemReceived,
     this.pageLoadingWidget = const DefaultPageLoadingView(),
+    this.pageErrorWidgetBuilder,
     this.itemLoadingWidget = const DefaultBottomLoader(),
+    this.itemErrorWidgetBuilder,
     this.emptyWidget = const DefaultEmptyView(),
     this.enablePrintStatements = kDebugMode,
     this.rebuildListWhenSourceChanges = false,
@@ -43,7 +45,15 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
 
   /// Optional replacement for the loading widget displayed before the first
   /// chunk is loaded.
+  ///
+  /// Defaults to use [DefaultPageLoadingView]
   final Widget? pageLoadingWidget;
+
+  /// Optional replacement for the error widget displayed when getting the
+  /// next chunk fails
+  ///
+  /// Defaults to use the [DefaultErrorCard]
+  final ErrorWidgetBuilder? pageErrorWidgetBuilder;
 
   /// Optional replacement for the loading widget displayed at the end of the
   /// list while the next chunk is loading.
@@ -51,7 +61,15 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// The loading widget will replace the last item in the list until the new
   /// chunk of items are loaded. The last item will load in when there are no
   /// more available chunks.
+  ///
+  /// Defaults to use [DefaultBottomLoader]
   final Widget? itemLoadingWidget;
+
+  /// Optional replacement for the error widget displayed when calling the
+  /// paginatedItemBuilder fails
+  ///
+  /// Defaults to use the [DefaultErrorCard]
+  final ErrorWidgetBuilder? itemErrorWidgetBuilder;
 
   /// Optional replacement for the empty widget displayed when we've finished
   /// loading the first chunk and there are still no items
@@ -169,7 +187,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   int get requestThresholdIndex =>
       (cacheIndex * widget.thresholdPercent).floor();
   int get chunksRequested => _chunksRequested;
-  String errorMessage = '';
+  Widget? pageErrorWidget;
 
   Paginator<DataType, CursorType> defaultPaginatorBuilder(
     CursorSelector<DataType, CursorType> cursorSelector,
@@ -192,11 +210,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     final chunkLimit = widget.chunkDataLimit ?? Chunk.defaultLimit;
     _requestChunk(Chunk(limit: chunkLimit))
         .then(_updateView)
-        .then(_listenForChanges)
-        .catchError((dynamic e) {
-      // ignore: avoid_dynamic_calls
-      setState(() => errorMessage = e.message as String);
-    });
+        .then(_listenForChanges);
   }
 
   /// Listen to a stream of items and insert them into the list
@@ -226,8 +240,8 @@ abstract class PaginatedBaseState<DataType, CursorType,
   @override
   Widget build(BuildContext context) {
     final isLoading = loading && cachedItems.isEmpty;
-    if (errorMessage.isNotEmpty) {
-      return DefaultErrorView(errorMessage: errorMessage);
+    if (pageErrorWidget != null) {
+      return pageErrorWidget!;
     } else if (isLoading) {
       return widget.pageLoadingWidget!;
     } else if (cachedItems.isEmpty) {
@@ -283,13 +297,22 @@ abstract class PaginatedBaseState<DataType, CursorType,
     final isAtEnd = itemLocation == _cachedItems.length;
     final nextChunkIsLoading = nextAvailableChunk.status != ChunkStatus.last;
 
+    /// Builds the item from user code or shows an error widget
+    Widget buildItemOrError() {
+      try {
+        return paginatedItemBuilder(
+          context,
+          index,
+          animation,
+        );
+      } catch (e) {
+        return widget.itemErrorWidgetBuilder?.call(e) ?? DefaultErrorCard(e);
+      }
+    }
+
     return isAtEnd && nextChunkIsLoading
         ? widget.itemLoadingWidget!
-        : paginatedItemBuilder(
-            context,
-            index,
-            animation,
-          );
+        : buildItemOrError();
   }
 
   Future<void> getChunkIfInLastChunkAndPastThreshold(int index) async {
@@ -311,6 +334,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
     conditionalPrint('paginated_builder: requesting chunk');
     try {
       loading = true;
+      pageErrorWidget = null;
 
       lastRequestedChunk = chunk;
 
@@ -333,8 +357,10 @@ abstract class PaginatedBaseState<DataType, CursorType,
       return result;
     } catch (e) {
       loading = false;
+      final errorWidget =
+          widget.pageErrorWidgetBuilder?.call(e) ?? DefaultErrorCard(e);
 
-      rethrow;
+      setState(() => pageErrorWidget = errorWidget);
     }
   }
 
@@ -346,28 +372,28 @@ abstract class PaginatedBaseState<DataType, CursorType,
   }
 }
 
-class DefaultErrorView extends StatelessWidget {
-  const DefaultErrorView({
-    required this.errorMessage,
+class DefaultErrorCard extends StatelessWidget {
+  const DefaultErrorCard(
+    this.error, {
     super.key,
   });
 
-  final String errorMessage;
+  final Object error;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: Theme.of(context).colorScheme.error,
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Text(
-            errorMessage,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onError,
-              fontWeight: FontWeight.bold,
-            ),
+    return Card(
+      color: Theme.of(context).colorScheme.error,
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          error.toString(),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onError,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
           ),
         ),
       ),

@@ -32,3 +32,4 @@ typedef DefaultPaginatorBuilder<DataType, CursorType>
   CursorSelector<DataType, CursorType> cursorSelector,
   DataChunker<DataType, CursorType> dataChunker,
 );
+typedef ErrorWidgetBuilder = Widget Function(Object error);
