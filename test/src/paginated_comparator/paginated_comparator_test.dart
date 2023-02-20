@@ -72,6 +72,7 @@ void main() {
           itemBuilder: itemBuilder,
           listBuilder: listBuilder,
           enablePrintStatements: false,
+          shouldShowItemLoader: false,
         ),
       ),
     );
@@ -115,6 +116,7 @@ void main() {
           itemBuilder: itemBuilder,
           listBuilder: listBuilder,
           enablePrintStatements: false,
+          shouldShowItemLoader: false,
         ),
       ),
     );
