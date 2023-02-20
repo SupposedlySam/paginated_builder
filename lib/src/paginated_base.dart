@@ -189,7 +189,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   int get chunksRequested => _chunksRequested;
   Widget? pageErrorWidget;
 
-  Paginator<DataType, CursorType> defaultPaginatorBuilder(
+  Paginator<DataType, CursorType> paginatorBuilder(
     CursorSelector<DataType, CursorType> cursorSelector,
     DataChunker<DataType, CursorType> dataChunker,
   ) {
@@ -346,7 +346,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
         );
       }
 
-      final paginator = defaultPaginatorBuilder(
+      final paginator = paginatorBuilder(
         widget.cursorSelector ?? (value) => value as CursorType,
         widget.dataChunker,
       );
