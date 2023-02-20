@@ -20,8 +20,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
     this.thresholdPercent = PaginatedBase.defaultThresholdPercent,
     this.chunkDataLimit,
     this.onItemReceived,
-    this.loadingWidget,
-    this.emptyWidget,
+    this.pageLoadingWidget = const DefaultPageLoadingView(),
+    this.itemLoadingWidget = const DefaultBottomLoader(),
+    this.emptyWidget = const DefaultEmptyView(),
     this.enablePrintStatements = kDebugMode,
     this.rebuildListWhenSourceChanges = false,
     this.rebuildListWhenChunkIsCached = false,
@@ -40,9 +41,17 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// next chunk of data is retrieved.
   static const double defaultThresholdPercent = 0.7;
 
-  /// Optional replacement for  the loading widget displayed before the first
+  /// Optional replacement for the loading widget displayed before the first
   /// chunk is loaded.
-  final Widget? loadingWidget;
+  final Widget? pageLoadingWidget;
+
+  /// Optional replacement for the loading widget displayed at the end of the
+  /// list while the next chunk is loading.
+  ///
+  /// The loading widget will replace the last item in the list until the new
+  /// chunk of items are loaded. The last item will load in when there are no
+  /// more available chunks.
+  final Widget? itemLoadingWidget;
 
   /// Optional replacement for the empty widget displayed when we've finished
   /// loading the first chunk and there are still no items
@@ -220,12 +229,12 @@ abstract class PaginatedBaseState<DataType, CursorType,
     if (errorMessage.isNotEmpty) {
       return DefaultErrorView(errorMessage: errorMessage);
     } else if (isLoading) {
-      return widget.loadingWidget ?? const DefaultLoadingView();
+      return widget.pageLoadingWidget!;
     } else if (cachedItems.isEmpty) {
-      return widget.emptyWidget ?? const DefaultEmptyView();
+      return widget.emptyWidget!;
     }
 
-    return widget.listBuilder(cacheLength, paginatedItemBuilder);
+    return widget.listBuilder(cacheLength, paginatedItemBuilderWithEndLoader);
   }
 
   Future<void> _getNextChunk() async {
@@ -265,6 +274,24 @@ abstract class PaginatedBaseState<DataType, CursorType,
     Animation<double>? animation,
   ]);
 
+  Widget paginatedItemBuilderWithEndLoader(
+    BuildContext context,
+    int index, [
+    Animation<double>? animation,
+  ]) {
+    final itemLocation = index + 1;
+    final isAtEnd = itemLocation == _cachedItems.length;
+    final nextChunkIsLoading = nextAvailableChunk.status != ChunkStatus.last;
+
+    return isAtEnd && nextChunkIsLoading
+        ? widget.itemLoadingWidget!
+        : paginatedItemBuilder(
+            context,
+            index,
+            animation,
+          );
+  }
+
   Future<void> getChunkIfInLastChunkAndPastThreshold(int index) async {
     final inLastChunk = index > lastCachedChunkStartingIndex;
     final hasMetThreshold = index >= requestThresholdIndex;
@@ -287,9 +314,8 @@ abstract class PaginatedBaseState<DataType, CursorType,
 
       lastRequestedChunk = chunk;
 
-      if (widget.cursorSelector != null ||
-          (widget.cursorSelector == null &&
-              typeOf<DataType>() != typeOf<CursorType>())) {
+      if (widget.cursorSelector == null &&
+          typeOf<DataType>() != typeOf<CursorType>()) {
         throw Exception(
           'You must provide a `cursorSelector` when your `DataType` and'
           " `CursorType` don't match",
@@ -349,8 +375,8 @@ class DefaultErrorView extends StatelessWidget {
   }
 }
 
-class DefaultLoadingView extends StatelessWidget {
-  const DefaultLoadingView({super.key});
+class DefaultPageLoadingView extends StatelessWidget {
+  const DefaultPageLoadingView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -364,5 +390,23 @@ class DefaultEmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(child: Text('Nothing to see here'));
+  }
+}
+
+class DefaultBottomLoader extends StatelessWidget {
+  const DefaultBottomLoader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: SizedBox(
+          height: 24,
+          width: 24,
+          child: CircularProgressIndicator(strokeWidth: 1.5),
+        ),
+      ),
+    );
   }
 }
