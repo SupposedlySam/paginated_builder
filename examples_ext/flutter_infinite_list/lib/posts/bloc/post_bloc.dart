@@ -1,9 +1,6 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
-import 'package:chunk/chunk.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter_infinite_list/posts/posts.dart';
 import 'package:http/http.dart' as http;
 
@@ -18,14 +15,11 @@ class PostBloc extends Cubit<PostState> {
   Future<List<Post>> fetchPosts(int? cursor, int limit) async {
     final startIndex = cursor ?? 0;
 
-    final response = await Future.delayed(
-      const Duration(seconds: 1),
-      () => httpClient.get(
-        Uri.https(
-          'jsonplaceholder.typicode.com',
-          '/posts',
-          <String, String>{'_start': '$startIndex', '_limit': '$limit'},
-        ),
+    final response = await httpClient.get(
+      Uri.https(
+        'jsonplaceholder.typicode.com',
+        '/posts',
+        <String, String>{'_start': '$startIndex', '_limit': '$limit'},
       ),
     );
 
@@ -36,6 +30,7 @@ class PostBloc extends Cubit<PostState> {
         return Post.fromJson(map);
       }).toList();
     }
+
     throw Exception('error fetching posts');
   }
 }
