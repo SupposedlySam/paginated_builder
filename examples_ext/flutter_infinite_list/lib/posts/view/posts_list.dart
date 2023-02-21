@@ -4,13 +4,22 @@ import 'package:flutter_infinite_list/posts/posts.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 
 class PostsList extends StatelessWidget {
-  const PostsList({super.key});
+  const PostsList({
+    required this.onListRebuild,
+    required this.paginatorKey,
+    super.key,
+  });
+
+  final VoidCallback onListRebuild;
+  final GlobalKey<PaginatedBuilderState<Post, int>> paginatorKey;
 
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<PostBloc>();
 
     return PaginatedBuilder<Post, int>(
+      key: paginatorKey,
+      chunkDataLimit: PostsPage.chunkSize,
       emptyWidget: const Center(child: Text('no posts')),
       rebuildListWhenChunkIsCached: true,
       cursorSelector: (Post post) => post.id,
@@ -24,6 +33,7 @@ class PostsList extends StatelessWidget {
         return PostListItem(post: data.item);
       },
       dataChunker: bloc.fetchPosts,
+      onListRebuild: onListRebuild,
     );
   }
 }
