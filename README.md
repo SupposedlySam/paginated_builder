@@ -28,7 +28,7 @@ Sometimes you just want to know item came before, and after your current item. W
 
 _Note: the first item's `previous` value will be the same as the `current`, and the last item's `next` will be the same as `current`._
 
-- All the same features as the Paginated Builder, but with converted
+- All the same features as the Paginated Builder
 - Access previous, current and next items in the current item's builder
 
 ### Let me see it!
