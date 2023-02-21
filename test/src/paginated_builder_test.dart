@@ -74,7 +74,7 @@ void main() {
             itemBuilder: itemBuilder,
             rebuildListWhenChunkIsCached: true,
             enablePrintStatements: false,
-            afterPageLoadChangeStream: afterPageLoadChange.stream,
+            listStartChangeStream: afterPageLoadChange.stream,
             listBuilder: listBuilder,
           ),
         ),
@@ -173,7 +173,7 @@ void main() {
               throw Exception(failureText);
             },
             itemBuilder: itemBuilder,
-            afterPageLoadChangeStream: afterPageLoadChange.stream,
+            listStartChangeStream: afterPageLoadChange.stream,
             rebuildListWhenChunkIsCached: true,
             listBuilder: listBuilder,
             enablePrintStatements: false,
@@ -211,7 +211,7 @@ void main() {
               Animation<double>? animation,
             ]) =>
                 throw Exception(failureText),
-            afterPageLoadChangeStream: afterPageLoadChange.stream,
+            listStartChangeStream: afterPageLoadChange.stream,
             listBuilder: listBuilder,
             enablePrintStatements: false,
           ),

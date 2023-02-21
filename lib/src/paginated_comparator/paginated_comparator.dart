@@ -10,7 +10,7 @@ class PaginatedComparator<DataType, CursorType>
     required super.listBuilder,
     required this.itemBuilder,
     required super.dataChunker,
-    super.afterPageLoadChangeStream,
+    super.listStartChangeStream,
     super.chunkDataLimit,
     super.cursorSelector,
     super.emptyWidget,
@@ -23,7 +23,7 @@ class PaginatedComparator<DataType, CursorType>
     super.onItemReceived,
     super.onListRebuild,
     super.rebuildListWhenChunkIsCached,
-    super.rebuildListWhenSourceChanges,
+    super.rebuildListWhenStreamHasChanges,
     super.shouldShowItemLoader,
     super.thresholdPercent,
   });

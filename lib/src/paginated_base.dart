@@ -13,24 +13,25 @@ import 'package:paginated_builder/src/utils.dart';
 /// Commonly used as a wrapper around [ListView.builder].
 abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   const PaginatedBase({
-    required this.listBuilder,
-    required this.cursorSelector,
     required this.dataChunker,
-    this.afterPageLoadChangeStream = const Stream.empty(),
-    this.thresholdPercent = PaginatedBase.defaultThresholdPercent,
+    required this.listBuilder,
+    super.key,
+    this.listStartChangeStream = const Stream.empty(),
     this.chunkDataLimit,
-    this.onItemReceived,
-    this.pageLoadingWidget = const DefaultPageLoadingView(),
-    this.pageErrorWidgetBuilder,
-    this.itemLoadingWidget = const DefaultBottomLoader(),
-    this.itemErrorWidgetBuilder,
+    this.cursorSelector,
     this.emptyWidget = const DefaultEmptyView(),
     this.enablePrintStatements = kDebugMode,
-    this.rebuildListWhenSourceChanges = false,
-    this.rebuildListWhenChunkIsCached = false,
-    this.shouldShowItemLoader = true,
+    this.itemErrorWidgetBuilder,
+    this.itemLoadingWidget = const DefaultBottomLoader(),
+    this.onItemReceived,
     this.onListRebuild,
-    super.key,
+    this.pageErrorWidgetBuilder,
+    this.pageLoadingWidget = const DefaultPageLoadingView(),
+    this.rebuildListWhenChunkIsCached = false,
+    this.rebuildListWhenStreamHasChanges = false,
+    this.shouldAutoLoadNextChunk = true,
+    this.shouldShowItemLoader = true,
+    this.thresholdPercent = PaginatedBase.defaultThresholdPercent,
   })  : assert(
           thresholdPercent > 0.0,
           'threshold should be greater than 0',
@@ -84,9 +85,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
 
   /// The stream listened to once the initial page load happens.
   ///
-  /// When items are added to this stream, they will be added to the cache and
-  /// [onItemReceived] will be called.
-  final Stream<DataType> afterPageLoadChangeStream;
+  /// When items are added to this stream, they will be added to the beginning
+  /// of the cache and [onItemReceived] will be called with a zero index.
+  final Stream<DataType> listStartChangeStream;
 
   /// The function used to generate the widget shown when items exist in the
   /// cache.
@@ -120,11 +121,9 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// but not in production
   final bool enablePrintStatements;
 
-  /// Pagination is based on the original data retrieved from the
-  /// [afterPageLoadChangeStream]. When changes occur (new items are added to
-  /// the stream)
-  /// this value tells whether or not to re-render the entire list.
-  final bool rebuildListWhenSourceChanges;
+  /// Whether to recreate the the Widget provided in the [listBuilder] after a
+  /// change comes through on the [listStartChangeStream].
+  final bool rebuildListWhenStreamHasChanges;
 
   /// Whether to recreate the Widget provided in the [listBuilder] when items
   /// from a new chunk is added to the in-memory cache
@@ -153,6 +152,19 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// See: [itemLoadingWidget] to use a custom Widget as the loader
   final bool shouldShowItemLoader;
 
+  /// Whether to automatically load the next chunk of data when the threshold
+  /// is met and more are available
+  ///
+  /// Defaults to `true`
+  ///
+  /// The [PaginatedBaseState.getChunkIfInLastChunkAndPastThreshold] method will
+  /// need to be manually invoked from your State Widget if this is set to
+  /// `false`.
+  ///
+  /// See [PaginatedBuilder] for an example of how to extend this class
+  /// correctly
+  final bool shouldAutoLoadNextChunk;
+
   /// Used to select the value to passed into the [dataChunker] the next time
   /// it's called.
   ///
@@ -169,8 +181,7 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// [cursorSelector] from the last time the [getNext] method was called.
   ///
   /// If the [cursor] is `null`, this is the first time the method is being run
-  /// for this data source. Alternatively, it is possible to also receive a null
-  /// cursor if the
+  /// for this data source.
   ///
   /// The [limit] is the maximum amount of items the method expects to receive
   /// when being invoked.
@@ -234,7 +245,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   /// Listen to a stream of items and insert them into the list
   void _listenForChanges(_) {
     dataSourceChangesSub ??=
-        widget.afterPageLoadChangeStream.listen(_cacheStartAndNotify);
+        widget.listStartChangeStream.listen(_cacheStartAndNotify);
   }
 
   void _updateView<T>([T? _]) {
@@ -269,7 +280,10 @@ abstract class PaginatedBaseState<DataType, CursorType,
     return widget.listBuilder(
       cacheLength,
       (context, index, [animation]) {
-        getChunkIfInLastChunkAndPastThreshold(index);
+        if (widget.shouldAutoLoadNextChunk) {
+          getChunkIfInLastChunkAndPastThreshold(index);
+        }
+
         return paginatedItemBuilderWithEndLoader(context, index, animation);
       },
     );
@@ -298,7 +312,7 @@ abstract class PaginatedBaseState<DataType, CursorType,
   void _cacheStartAndNotify(DataType data) {
     final shouldUpdateUI = _cachedItems.isEmpty;
     _cachedItems.insert(0, data);
-    if (shouldUpdateUI || widget.rebuildListWhenSourceChanges) {
+    if (shouldUpdateUI || widget.rebuildListWhenStreamHasChanges) {
       _updateView<DataType>();
     }
     widget.onItemReceived?.call(0, data);
