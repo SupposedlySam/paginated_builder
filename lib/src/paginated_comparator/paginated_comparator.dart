@@ -28,9 +28,9 @@ class PaginatedComparator<DataType, CursorType>
     super.thresholdPercent,
   });
 
-  /// The item reducer is the same callback used with [ListView.builder] with
+  /// The item builder is the same callback used with [ListView.builder] with
   /// one exception. Normally you receive an index, whereas with this
-  /// [itemComparator] you receive two converted items instead of an index.
+  /// [itemBuilder] you receive converted items instead of an index.
   /// The converted items are the previous item, the current item, and the
   /// next item.
   ///
