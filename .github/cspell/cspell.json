@@ -15,5 +15,10 @@
     }
   ],
   "useGitignore": true,
-  "words": ["endtemplate"]
+  "words": ["endtemplate"],
+  "files": [
+    "**/*.{dart,md,yaml}",
+    "!.dart_tool/**/*.{dart,yaml}",
+    ".*/**/*.yml"
+  ]
 }

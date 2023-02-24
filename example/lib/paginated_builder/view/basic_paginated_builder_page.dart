@@ -71,7 +71,7 @@ class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
                 dataChunker: _handleGetNext,
                 itemBuilder: _itemBuilder,
                 listBuilder: _listBuilder,
-                // Required when using a List wiget that doesn't allow
+                // Required when using a List widget that doesn't allow
                 // item insertion
                 rebuildListWhenChunkIsCached: true,
                 onListRebuild: _updateBuilderMetrics,

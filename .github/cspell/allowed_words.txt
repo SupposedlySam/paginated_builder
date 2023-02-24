@@ -2,3 +2,12 @@ animatable
 chunker
 gifs
 typedefs
+genhtml
+lcov
+xcworkspace
+xcassets
+mocktail
+localizable
+jsonplaceholder
+typicode
+Debuggable

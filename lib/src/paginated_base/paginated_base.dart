@@ -147,7 +147,7 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// Whether to replace the last item in the list with a loading Widget when a
   /// new chunk is being retrieved.
   ///
-  /// Defauls to `true`
+  /// Defaults to `true`
   ///
   /// See: [itemLoadingWidget] to use a custom Widget as the loader
   final bool shouldShowItemLoader;

@@ -202,7 +202,7 @@ PaginatedComparator<Post, Post>(
   dataChunker: _handleGetNext, // Defined above!
   listBuilder: _listBuilder, // Defined below!
   itemBuilder: _itemBuilder, // Defined below!
-  // Required when using a List wiget that doesn't allow
+  // Required when using a List widget that doesn't allow
   // item insertion
   rebuildListWhenChunkIsCached: true,
 )
@@ -369,7 +369,7 @@ It's recommended to use a `AnimatedList` to insert and removes items from the st
 
 Whether to replace the last item in the list with a loading Widget when a new chunk is being retrieved.
 
-Defauls to `true`
+Defaults to `true`
 
 #### cursorSelector
 
