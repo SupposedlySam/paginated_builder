@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paginated_builder/paginated_builder.dart';
+import 'package:paginated_builder/src/paginated_base/widgets/widgets.dart';
 
 import '../../models/post.dart';
 

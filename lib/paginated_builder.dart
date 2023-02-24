@@ -1,5 +1,5 @@
 export 'package:chunk/chunk.dart';
-export 'package:paginated_builder/src/paginated_base.dart';
+export 'package:paginated_builder/src/paginated_base/paginated_base.dart';
 export 'package:paginated_builder/src/paginated_builder.dart';
 export 'package:paginated_builder/src/paginated_comparator/models/item_comparator.dart';
 export 'package:paginated_builder/src/paginated_comparator/paginated_comparator.dart';

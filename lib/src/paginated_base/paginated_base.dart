@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide ErrorWidgetBuilder;
 import 'package:flutter/scheduler.dart';
 import 'package:paginated_builder/paginated_builder.dart';
-
+import 'package:paginated_builder/src/paginated_base/widgets/widgets.dart';
 import 'package:paginated_builder/src/utils.dart';
 
 /// Manages caching and retrieval of [Chunk]s using the provided [paginator].
@@ -405,70 +405,5 @@ abstract class PaginatedBaseState<DataType, CursorType,
       // ignore: avoid_print
       print(message); // coverage:ignore-line
     }
-  }
-}
-
-class DefaultErrorCard extends StatelessWidget {
-  const DefaultErrorCard(
-    this.error, {
-    super.key,
-  });
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.error,
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          error.toString(),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onError,
-            fontWeight: FontWeight.bold,
-            height: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class DefaultPageLoadingView extends StatelessWidget {
-  const DefaultPageLoadingView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator.adaptive());
-  }
-}
-
-class DefaultEmptyView extends StatelessWidget {
-  const DefaultEmptyView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Nothing to see here'));
-  }
-}
-
-class DefaultBottomLoader extends StatelessWidget {
-  const DefaultBottomLoader({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24),
-      child: Center(
-        child: SizedBox(
-          height: 24,
-          width: 24,
-          child: CircularProgressIndicator(strokeWidth: 1.5),
-        ),
-      ),
-    );
   }
 }
