@@ -15,21 +15,25 @@ class PostBloc extends Cubit<PostState> {
   final http.Client httpClient;
 
   Future<List<Post>> fetchPosts(int? cursor, int limit) async {
+    assert(limit > 0, "The limit should be greater than 0");
+
     final startIndex = cursor ?? 0;
 
-    final response = await httpClient.get(
-      Uri.https(
-        'jsonplaceholder.typicode.com',
-        '/posts',
-        <String, String>{'_start': '$startIndex', '_limit': '$limit'},
+    final response = await Future.delayed(
+      Duration(seconds: 1),
+      () => httpClient.get(
+        Uri.https(
+          'jsonplaceholder.typicode.com',
+          '/posts',
+          <String, String>{'_start': '$startIndex', '_limit': '$limit'},
+        ),
       ),
     );
 
     if (response.statusCode == 200) {
       final body = json.decode(response.body) as List;
-      return body.map((dynamic json) {
-        final map = json as Map<String, dynamic>;
-        return Post.fromJson(map);
+      return body.whereType<Map<String, dynamic>>().map((dynamic json) {
+        return Post.fromJson(json);
       }).toList();
     }
 

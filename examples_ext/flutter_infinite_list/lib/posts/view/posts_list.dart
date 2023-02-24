@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_infinite_list/posts/posts.dart';
+import 'package:flutter_infinite_list/posts/view/posts_list/widgets/widgets.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 
 class PostsList extends StatelessWidget {
@@ -20,7 +21,6 @@ class PostsList extends StatelessWidget {
     return PaginatedBuilder<Post, int>(
       key: paginatorKey,
       chunkDataLimit: PostsPage.chunkSize,
-      emptyWidget: const Center(child: Text('no posts')),
       rebuildListWhenChunkIsCached: true,
       cursorSelector: (Post post) => post.id,
       listBuilder: (initialItemCount, paginatedItemBuilder) {
@@ -34,6 +34,9 @@ class PostsList extends StatelessWidget {
       },
       dataChunker: bloc.fetchPosts,
       onListRebuild: onListRebuild,
+      emptyWidget: const EmptyView(),
+      pageLoadingWidget: ShimmerView(),
+      itemLoadingWidget: ShimmerItem(),
     );
   }
 }
