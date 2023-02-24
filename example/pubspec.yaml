@@ -18,6 +18,7 @@ dependencies:
   intl: ^0.17.0
   paginated_builder:
     path: ..
+  shimmer: ^2.0.0
 
 dev_dependencies:
   bloc_test: ^9.1.1

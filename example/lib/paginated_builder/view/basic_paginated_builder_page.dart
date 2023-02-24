@@ -2,7 +2,7 @@ import 'package:example/l10n/l10n.dart';
 import 'package:example/paginated_builder/cubit/basic_paginated_builder_cubit.dart';
 import 'package:example/paginated_builder/models/metrics_copy.dart';
 import 'package:example/paginated_builder/models/post.dart';
-import 'package:example/paginated_builder/view/widgets/builder_metrics.dart';
+import 'package:example/paginated_builder/view/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paginated_builder/paginated_builder.dart';
@@ -75,6 +75,9 @@ class _BasicPaginatedBuilderViewState extends State<BasicPaginatedBuilderView> {
                 // item insertion
                 rebuildListWhenChunkIsCached: true,
                 onListRebuild: _updateBuilderMetrics,
+                emptyWidget: const EmptyView(),
+                pageLoadingWidget: ShimmerView(),
+                itemLoadingWidget: ShimmerItem(),
               ),
             ),
           ],
