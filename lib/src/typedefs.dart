@@ -4,7 +4,7 @@ import 'package:paginated_builder/paginated_builder.dart';
 typedef MaybeJson = Map<String, dynamic>?;
 typedef ConvertedWidgetBuilder<T> = Widget Function(
   BuildContext context,
-  T item, [
+  ItemData<T> data, [
   Animation<double>? animation,
 ]);
 typedef ComparableWidgetBuilder<T> = Widget Function(
@@ -25,5 +25,11 @@ typedef EnclosingWidgetBuilder = Widget Function(
   int initialItemCount,
   AnimatableIndexedWidgetBuilder paginatedItemBuilder,
 );
-
 typedef ItemReceivedCallback<T> = void Function(int, T);
+typedef CursorSelector<DataType, CursorType> = CursorType Function(DataType);
+typedef DefaultPaginatorBuilder<DataType, CursorType>
+    = Paginator<DataType, CursorType> Function(
+  CursorSelector<DataType, CursorType> cursorSelector,
+  DataChunker<DataType, CursorType> dataChunker,
+);
+typedef ErrorWidgetBuilder = Widget Function(Object error);

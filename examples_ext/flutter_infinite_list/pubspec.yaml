@@ -1,0 +1,30 @@
+name: flutter_infinite_list
+description: A new Flutter project.
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: '>=2.17.0 <3.0.0'
+
+dependencies:
+  bloc_concurrency: ^0.2.1
+  chunk: ^1.0.1+1
+  equatable: ^2.0.3
+  flutter:
+    sdk: flutter
+  flutter_bloc:
+  http: ^0.13.0
+  paginated_builder:
+    path: ../..
+  shimmer: ^2.0.0
+  stream_transform: ^2.0.0
+
+dev_dependencies:
+  bloc_test: ^9.0.0
+  flutter_test:
+    sdk: flutter
+  mocktail: ^0.3.0
+  very_good_analysis: ^4.0.0+1
+
+flutter:
+  uses-material-design: true

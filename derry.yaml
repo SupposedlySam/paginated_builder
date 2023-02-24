@@ -2,4 +2,8 @@
 # flutter pub global activate derry
 
 # required before running: `yarn global add cspell`
-spell_check: cspell "**" --config ".github/cspell/cspell.json"
+spell_check: cspell "**/*.{dart,md,yaml}" --config ".github/cspell/cspell.json"
+coverage:
+  - flutter test --coverage
+  - genhtml -o coverage coverage/lcov.info
+  - open coverage/index.html
