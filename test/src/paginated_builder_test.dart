@@ -159,10 +159,98 @@ void main() {
 
         expect(getRequestedChunkCount(), 2);
       });
+
+      testWidgets('should trigger onListRebuild callback', (tester) async {
+        var rebuildCount = 0;
+        final widget = MaterialApp(
+          home: Scaffold(
+            body: PaginatedBuilder<Post, Post>(
+              key: key,
+              chunkDataLimit: 100,
+              dataChunker: (cursor, limit) =>
+                  handleGetNext(allPosts, cursor, limit),
+              itemBuilder: itemBuilder,
+              rebuildListWhenChunkIsCached: true,
+              enablePrintStatements: false,
+              listStartChangeStream: afterPageLoadChange.stream,
+              listBuilder: listBuilder,
+              onListRebuild: () {
+                rebuildCount++;
+              },
+            ),
+          ),
+        );
+        await tester.pumpWidget(widget);
+        await tester.pumpAndSettle(const Duration(seconds: 100));
+
+        expect(rebuildCount, greaterThan(0));
+      });
+
+      testWidgets('should update view callback', (tester) async {
+        var rebuildCount = 0;
+        final widget = MaterialApp(
+          home: Scaffold(
+            body: PaginatedBuilder<Post, Post>(
+              key: key,
+              chunkDataLimit: 100,
+              dataChunker: (cursor, limit) =>
+                  handleGetNext(allPosts, cursor, limit),
+              itemBuilder: itemBuilder,
+              rebuildListWhenChunkIsCached: true,
+              enablePrintStatements: false,
+              listStartChangeStream: afterPageLoadChange.stream,
+              listBuilder: listBuilder,
+              onListRebuild: () {
+                rebuildCount++;
+              },
+              rebuildListWhenStreamHasChanges: true,
+            ),
+          ),
+        );
+        await tester.pumpWidget(widget);
+        await tester.pumpAndSettle(const Duration(seconds: 100));
+
+        const changedPost = Post(id: 0, title: 'post 0', body: 'post body');
+        afterPageLoadChange.sink.add(changedPost);
+
+        expect(rebuildCount, greaterThan(0));
+      });
     });
   });
 
   group('Should show error', () {
+    testWidgets(
+      'page when no cursorSelector with different data types',
+      (tester) async {
+        final allPosts = List.generate(5, (index) {
+          final location = index + 1;
+          return Post(id: location, title: 'post $location', body: 'post body');
+        });
+        final widget = MaterialApp(
+          home: Scaffold(
+            body: PaginatedBuilder<Post, int>(
+              key: key,
+              chunkDataLimit: 1,
+              dataChunker: (int? cursor, int limit) async =>
+                  // Shouldn't get here, casting to make type system happy.
+                  handleGetNext(allPosts, cursor as Post?, limit),
+              itemBuilder: itemBuilder,
+              listStartChangeStream: afterPageLoadChange.stream,
+              rebuildListWhenChunkIsCached: true,
+              listBuilder: listBuilder,
+              enablePrintStatements: false,
+            ),
+          ),
+        );
+
+        await tester.pumpWidget(widget); // Shows loading widget
+        await tester.pump(); // Runs builder
+        await tester.pump(); // loads error
+
+        expect(find.byType(DefaultErrorCard), findsOneWidget);
+      },
+    );
+
     testWidgets('page when fetching chunk fails', (tester) async {
       const failureText = 'expected failure';
       final widget = MaterialApp(
