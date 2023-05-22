@@ -18,14 +18,17 @@ dependencies:
   intl: ^0.17.0
   paginated_builder:
     path: ..
-  shimmer: ^2.0.0
+  shimmer: ^3.0.0
+
+dependency_overrides:
+  intl: 0.17.0
 
 dev_dependencies:
   bloc_test: ^9.1.1
   flutter_test:
     sdk: flutter
   mocktail: ^0.3.0
-  very_good_analysis: ^4.0.0
+  very_good_analysis: ^5.0.0+1
 
 flutter:
   uses-material-design: true
