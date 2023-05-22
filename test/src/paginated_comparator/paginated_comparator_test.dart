@@ -61,7 +61,13 @@ void main() {
   setUp(() {
     allPosts = List.generate(100, (index) {
       final location = index + 1;
-      return Post(id: location, title: 'post $location', body: 'post body');
+      return Post(
+        data: PostData(
+          id: location,
+          title: 'post $location',
+          body: 'post body',
+        ),
+      );
     });
 
     widget = MaterialApp(

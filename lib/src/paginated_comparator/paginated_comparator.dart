@@ -4,7 +4,7 @@ import 'package:paginated_builder/paginated_builder.dart';
 /// Manages caching and retrieval of [Chunk]s using the provided [paginator].
 ///
 /// Commonly used as a wrapper around [ListView.builder].
-class PaginatedComparator<DataType, CursorType>
+final class PaginatedComparator<DataType, CursorType>
     extends PaginatedBase<DataType, CursorType> {
   const PaginatedComparator({
     required super.listBuilder,
@@ -53,8 +53,9 @@ class PaginatedComparator<DataType, CursorType>
       PaginatedComparatorState<DataType, CursorType>();
 }
 
-class PaginatedComparatorState<DataType, CursorType> extends PaginatedBaseState<
-    DataType, CursorType, PaginatedComparator<DataType, CursorType>> {
+final class PaginatedComparatorState<DataType, CursorType>
+    extends PaginatedBaseState<DataType, CursorType,
+        PaginatedComparator<DataType, CursorType>> {
   /// Contains the available index to be within bounds
   ///
   /// This prevents "OutOfRangeException"s being thrown when searching for the

@@ -11,7 +11,7 @@ import 'package:paginated_builder/src/utils.dart';
 /// Manages caching and retrieval of [Chunk]s using the provided [paginator].
 ///
 /// Commonly used as a wrapper around [ListView.builder].
-abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
+abstract base class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   const PaginatedBase({
     required this.dataChunker,
     required this.listBuilder,
@@ -87,7 +87,7 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   ///
   /// When items are added to this stream, they will be added to the beginning
   /// of the cache and [onItemReceived] will be called with a zero index.
-  final Stream<DataType> listStartChangeStream;
+  final Stream<PaginatedSnapshot<DataType>> listStartChangeStream;
 
   /// The function used to generate the widget shown when items exist in the
   /// cache.
@@ -105,7 +105,7 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   /// Invoked when data from a new chunk is received
   ///
   /// The callback will be called for every item received in each chunk
-  final ItemReceivedCallback<DataType>? onItemReceived;
+  final ItemReceivedCallback<DataType?>? onItemReceived;
 
   /// Invoked when the list rebuilds
   ///
@@ -191,14 +191,14 @@ abstract class PaginatedBase<DataType, CursorType> extends StatefulWidget {
   final DataChunker<DataType, CursorType> dataChunker;
 }
 
-abstract class PaginatedBaseState<DataType, CursorType,
+abstract base class PaginatedBaseState<DataType, CursorType,
         StateType extends PaginatedBase<DataType, CursorType>>
     extends State<StateType> {
   final List<DataType> _cachedItems = <DataType>[];
   late Chunk<DataType, CursorType> lastRequestedChunk;
   late Chunk<DataType, CursorType> nextAvailableChunk;
   bool loading = false;
-  StreamSubscription<DataType>? dataSourceChangesSub;
+  StreamSubscription<PaginatedSnapshot<DataType>>? dataSourceChangesSub;
   int _chunksRequested = 0;
 
   List<DataType> get cachedItems => _cachedItems;
@@ -244,8 +244,14 @@ abstract class PaginatedBaseState<DataType, CursorType,
 
   /// Listen to a stream of items and insert them into the list
   void _listenForChanges(_) {
-    dataSourceChangesSub ??=
-        widget.listStartChangeStream.listen(_cacheStartAndNotify);
+    dataSourceChangesSub ??= widget.listStartChangeStream.listen((snap) {
+      switch (snap.state) {
+        case SnapshotState.stable:
+          _cacheStartAndNotify(snap.data);
+        case SnapshotState.deleted:
+          _removeItemAndNotify(snap.data);
+      }
+    });
   }
 
   void _updateView<T>([T? _]) {
@@ -311,11 +317,22 @@ abstract class PaginatedBaseState<DataType, CursorType,
 
   void _cacheStartAndNotify(DataType data) {
     final shouldUpdateUI = _cachedItems.isEmpty;
+
     _cachedItems.insert(0, data);
     if (shouldUpdateUI || widget.rebuildListWhenStreamHasChanges) {
       _updateView<DataType>();
     }
     widget.onItemReceived?.call(0, data);
+  }
+
+  void _removeItemAndNotify(DataType data) {
+    final itemIndex = _cachedItems.indexOf(data);
+    final wasRemoved = _cachedItems.remove(data);
+
+    if (wasRemoved && widget.rebuildListWhenStreamHasChanges) {
+      _updateView<DataType>();
+      widget.onItemReceived?.call(itemIndex, null);
+    }
   }
 
   Widget paginatedItemBuilder(

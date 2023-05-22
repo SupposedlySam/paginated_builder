@@ -4,7 +4,7 @@ import 'package:paginated_builder/paginated_builder.dart';
 /// Manages caching and retrieval of [Chunk]s using the provided [paginator].
 ///
 /// Commonly used as a wrapper around [ListView.builder].
-class PaginatedBuilder<DataType, CursorType>
+final class PaginatedBuilder<DataType, CursorType>
     extends PaginatedBase<DataType, CursorType> {
   const PaginatedBuilder({
     required super.listBuilder,
@@ -41,8 +41,9 @@ class PaginatedBuilder<DataType, CursorType>
       PaginatedBuilderState<DataType, CursorType>();
 }
 
-class PaginatedBuilderState<DataType, CursorType> extends PaginatedBaseState<
-    DataType, CursorType, PaginatedBuilder<DataType, CursorType>> {
+final class PaginatedBuilderState<DataType, CursorType>
+    extends PaginatedBaseState<DataType, CursorType,
+        PaginatedBuilder<DataType, CursorType>> {
   @override
   Widget paginatedItemBuilder(
     BuildContext context,

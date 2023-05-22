@@ -1,7 +1,22 @@
 import 'package:equatable/equatable.dart';
+import 'package:paginated_builder/paginated_builder.dart';
 
-class Post extends Equatable {
-  const Post({required this.id, required this.title, required this.body});
+final class Post extends PaginatedSnapshot<PostData> {
+  const Post({
+    required super.data,
+  }) : super(state: SnapshotState.stable);
+
+  const Post.deleted({
+    required super.data,
+  }) : super(state: SnapshotState.deleted);
+
+  int get id => data.id;
+  String get title => data.title;
+  String get body => data.body;
+}
+
+class PostData extends Equatable {
+  const PostData({required this.id, required this.title, required this.body});
 
   final int id;
   final String title;
