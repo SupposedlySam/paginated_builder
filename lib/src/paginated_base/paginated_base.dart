@@ -329,8 +329,8 @@ abstract base class PaginatedBaseState<DataType, CursorType,
     final itemIndex = _cachedItems.indexOf(data);
     final wasRemoved = _cachedItems.remove(data);
 
-    if (wasRemoved && widget.rebuildListWhenStreamHasChanges) {
-      _updateView<DataType>();
+    if (wasRemoved) {
+      if (widget.rebuildListWhenStreamHasChanges) _updateView<DataType>();
       widget.onItemReceived?.call(itemIndex, null);
     }
   }
