@@ -1,3 +1,4 @@
 **/bricks/
 **/build/
 **/coverage/
+.fvm/flutter_sdk
