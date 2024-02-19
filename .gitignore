@@ -7,3 +7,6 @@ build/
 
 # Test coverage directory
 coverage/
+
+# Flutter version manager
+.fvm/flutter_sdk/
