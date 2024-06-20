@@ -2,16 +2,25 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:paginated_builder/paginated_builder.dart';
 import 'package:paginated_builder/src/paginated_base/widgets/widgets.dart';
 
 import '../models/post.dart';
 
+// ignore: one_member_abstracts
+abstract class Callback {
+  void call(dynamic value);
+}
+
+class MockCallback extends Mock implements Callback {}
+
 void main() {
   final key = GlobalKey<
       PaginatedBaseState<PostData, PostData,
           PaginatedBuilder<PostData, PostData>>>();
-  final afterPageLoadChange = StreamController<Post>.broadcast(
+  final afterPageLoadChange =
+      StreamController<PaginatedSnapshot<PostData>>.broadcast(
     sync: true,
   );
 
@@ -141,6 +150,28 @@ void main() {
       await tester.pump(); // Runs builder
 
       expect(find.text(changedPost.title), findsNothing);
+    });
+
+    testWidgets('should replace data when item is updated', (tester) async {
+      final postData = allPosts.first;
+      const expectedTitle = 'changedTitle';
+      final changedPost = Post.updated(
+        data: postData.copyWith(
+          title: expectedTitle,
+        ),
+      );
+
+      await tester.pumpWidget(widget); // Shows loading widget
+      await tester.pump(); // Runs builder
+      await tester.pump(); // Loads the first post
+
+      expect(find.text(postData.title), findsOneWidget);
+
+      afterPageLoadChange.sink.add(changedPost);
+      await tester.pump(); // Runs builder
+
+      expect(find.text(postData.title), findsNothing);
+      expect(find.text(changedPost.title), findsOneWidget);
     });
 
     group('with data limit enough for one view', () {
@@ -346,5 +377,52 @@ void main() {
 
       expect(find.byType(DefaultErrorCard), findsNWidgets(5));
     });
+
+    testWidgets(
+      'should throw when using SnapshotState.update without a uniqueIdFinder',
+      (tester) async {
+        final mockCallback = MockCallback();
+
+        await runZonedGuarded(
+          () async {
+            const postData =
+                PostData(id: 0, title: 'post 0', body: 'post body');
+
+            final changedPost = ExceptionOnUpdatePost.updated(
+              data: postData.copyWith(
+                title: 'changedTitle',
+              ),
+            );
+
+            final widget = MaterialApp(
+              home: Scaffold(
+                body: PaginatedBuilder<PostData, PostData>(
+                  key: key,
+                  chunkDataLimit: 1,
+                  dataChunker: (cursor, limit) =>
+                      handleGetNext([postData], cursor, limit),
+                  itemBuilder: itemBuilder,
+                  listStartChangeStream: afterPageLoadChange.stream,
+                  rebuildListWhenChunkIsCached: true,
+                  listBuilder: listBuilder,
+                  enablePrintStatements: false,
+                ),
+              ),
+            );
+
+            await tester.pumpWidget(widget); // Shows loading widget
+            await tester.pumpAndSettle();
+
+            afterPageLoadChange.sink.add(changedPost);
+            await tester.pumpAndSettle();
+          },
+          (_, __) {
+            mockCallback(_);
+          },
+        );
+
+        verify(() => mockCallback.call(any<dynamic>())).called(1);
+      },
+    );
   });
 }
