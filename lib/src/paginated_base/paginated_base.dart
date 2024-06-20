@@ -246,8 +246,10 @@ abstract base class PaginatedBaseState<DataType, CursorType,
   void _listenForChanges(_) {
     dataSourceChangesSub ??= widget.listStartChangeStream.listen((snap) {
       switch (snap.state) {
-        case SnapshotState.stable:
-          _cacheStartAndNotify(snap.data);
+        case SnapshotState.added:
+          _cacheStartAndNotify(snap.data, snap.state);
+        case SnapshotState.updated:
+          _replaceItemAndNotify(snap);
         case SnapshotState.deleted:
           _removeItemAndNotify(snap.data);
       }
@@ -305,24 +307,27 @@ abstract base class PaginatedBaseState<DataType, CursorType,
     conditionalPrint('paginated_builder: Next available is $chunk');
     nextAvailableChunk = chunk;
     if (nextAvailableChunk != lastRequestedChunk) {
-      chunk.data.forEach(_cacheEndAndNotify);
+      // ignore: avoid_function_literals_in_foreach_calls
+      chunk.data.forEach(
+        (data) => _cacheEndAndNotify(data, SnapshotState.added),
+      );
       if (widget.rebuildListWhenChunkIsCached) _updateView<DataType>();
     }
   }
 
-  void _cacheEndAndNotify(DataType data) {
+  void _cacheEndAndNotify(DataType data, SnapshotState state) {
     _cachedItems.add(data);
-    widget.onItemReceived?.call(cacheIndex, data);
+    widget.onItemReceived?.call(cacheIndex, data, state);
   }
 
-  void _cacheStartAndNotify(DataType data) {
+  void _cacheStartAndNotify(DataType data, SnapshotState state) {
     final shouldUpdateUI = _cachedItems.isEmpty;
 
     _cachedItems.insert(0, data);
     if (shouldUpdateUI || widget.rebuildListWhenStreamHasChanges) {
       _updateView<DataType>();
     }
-    widget.onItemReceived?.call(0, data);
+    widget.onItemReceived?.call(0, data, state);
   }
 
   void _removeItemAndNotify(DataType data) {
@@ -331,8 +336,27 @@ abstract base class PaginatedBaseState<DataType, CursorType,
 
     if (wasRemoved) {
       if (widget.rebuildListWhenStreamHasChanges) _updateView<DataType>();
-      widget.onItemReceived?.call(itemIndex, null);
+      widget.onItemReceived?.call(itemIndex, null, SnapshotState.deleted);
     }
+  }
+
+  void _replaceItemAndNotify(PaginatedSnapshot<DataType> snap) {
+    if (snap.uniqueIdFinder == null) {
+      throw Exception(
+        'You must provide a `uniqueIdFinder` when using the `updated` state',
+      );
+    }
+    final data = snap.data;
+
+    final itemIndex = _cachedItems.indexWhere(
+      (item) =>
+          snap.uniqueIdFinder!.call(item) == snap.uniqueIdFinder!.call(data),
+    );
+    if (itemIndex == -1) return;
+
+    _cachedItems[itemIndex] = data;
+    if (widget.rebuildListWhenStreamHasChanges) _updateView<DataType>();
+    widget.onItemReceived?.call(itemIndex, data, SnapshotState.updated);
   }
 
   Widget paginatedItemBuilder(
