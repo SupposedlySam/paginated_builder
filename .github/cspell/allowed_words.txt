@@ -11,3 +11,4 @@ localizable
 jsonplaceholder
 typicode
 Debuggable
+paginators
