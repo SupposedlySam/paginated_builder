@@ -335,6 +335,8 @@ Invoked when data from a new chunk is received
 
 The callback will be called for every item received in each chunk
 
+Also supports updating and deleting items. Use the SnapshotState parameter to decide how to handle the item received.
+
 #### onListRebuild
 
 Invoked when the list rebuilds
