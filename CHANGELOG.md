@@ -1,3 +1,8 @@
+## 1.0.1
+- Account for race conditions when getting a chunk and listening for changes.
+Previously, we got the chunk and then listened for changes after updating the UI. There was a chance that an update could have come in before we started listening, causing data to be missed. Now, we listen for changes before requesting the chunk and immediately pause the stream sub until after the UI is updated.
+While the chunk is getting processed, any changes get queued and emitted once the UI updates.
+
 ## 1.0.0
 
 !Breaking:

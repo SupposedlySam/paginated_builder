@@ -1,7 +1,7 @@
 name: paginated_builder
 description: A set of Widgets to paginate through data from any data source
 repository: https://github.com/SupposedlySam/paginated_builder/blob/jonahwalker/test/package/README.md
-version: 1.0.0
+version: 1.0.1
 
 # See https://docs.flutter.dev/development/tools/sdk/releases?tab=macos for versions
 environment:

@@ -237,14 +237,15 @@ abstract base class PaginatedBaseState<DataType, CursorType,
   void initState() {
     super.initState();
     final chunkLimit = widget.chunkDataLimit ?? Chunk.defaultLimit;
+    dataSourceChangesSub ??= _listenForChanges()..pause();
     _requestChunk(Chunk(limit: chunkLimit))
         .then(_updateView)
-        .then(_listenForChanges);
+        .then((_) => dataSourceChangesSub?.resume());
   }
 
   /// Listen to a stream of items and insert them into the list
-  void _listenForChanges(_) {
-    dataSourceChangesSub ??= widget.listStartChangeStream.listen((snap) {
+  StreamSubscription<PaginatedSnapshot<DataType>> _listenForChanges() {
+    return widget.listStartChangeStream.listen((snap) {
       switch (snap.state) {
         case SnapshotState.added:
           _cacheStartAndNotify(snap.data, snap.state);
